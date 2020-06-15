@@ -15,31 +15,29 @@ async function extract(iterator, dest, options) {
   const links = [];
   let entry = await iterator.next();
   while (entry) {
-    if (entry.type === 'symlink' || entry.type === 'link') links.push(entry);
+    if (entry.type === 'link') links.unshift(entry);
+    else if (entry.type === 'symlink') links.push(entry);
     else await entry.create(dest, options);
     entry = await iterator.next();
   }
 
-  // create links after directories and files
-  for (entry of links) {
-    await entry.create(dest, options);
-  }
+  // create links then symlinks after directories and files
+  for (const entry of links) await entry.create(dest, options);
 }
 
 async function extractForEach(iterator, dest, options) {
   const links = [];
   await iterator.forEach(
     async function (entry) {
-      if (entry.type === 'symlink' || entry.type === 'link') links.push(entry);
+      if (entry.type === 'link') links.unshift(entry);
+      else if (entry.type === 'symlink') links.push(entry);
       else await entry.create(dest, options);
     },
     { concurrency: options.concurrency }
   );
 
-  // create links after directories and files
-  for (const entry of links) {
-    await entry.create(dest, options);
-  }
+  // create links then symlinks after directories and files
+  for (const entry of links) await entry.create(dest, options);
 }
 
 describe('asyncAwait', function () {

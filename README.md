@@ -1,33 +1,47 @@
 ## zip-iterator
 
-Extract contents from zip archive type using an iterator API using streams or paths.
+Extract contents from zip archive type using an iterator API using streams or paths. Use stream interface and pipe transforms to add decompression algorithms.
 
 // asyncIterator
 
 ```js
 var assert = require('assert');
+var fs = require('fs');
 var ZipIterator = require('zip-iterator'));
-
 
 (async function() {
   let iterator = new ZipIterator('/path/to/archive');
 
   const links = [];
   for await (const entry of iterator) {
-    if (entry.type === 'symlink' || entry.type === 'link') links.push(entry);
+    if (entry.type === 'link') links.unshift(entry);
+    else if (entry.type === 'symlink') links.push(entry);
     else await entry.create(dest, options);
   }
 
   // create links after directories and files
-  for (const entry of links) {
-    await entry.create(dest, options);
-  }
+  for (const entry of links) await entry.create(dest, options);
 
   iterator.destroy();
   iterator = null;
 })();
 
+(async function() {
+  let iterator = new ZipIterator(fs.createReadStream('/path/to/archive'));
 
+  const links = [];
+  for await (const entry of iterator) {
+    if (entry.type === 'link') links.unshift(entry);
+    else if (entry.type === 'symlink') links.push(entry);
+    else await entry.create(dest, options);
+  }
+
+  // create links after directories and files
+  for (const entry of links) await entry.create(dest, options);
+
+  iterator.destroy();
+  iterator = null;
+})();
 ```
 
 // Async / Await
@@ -43,7 +57,8 @@ var ZipIterator = require('zip-iterator'));
   const links = [];
   let entry = await iterator.next();
   while (entry) {
-    if (entry.type === 'symlink' || entry.type === 'link') links.push(entry);
+    if (entry.type === 'link') links.unshift(entry);
+    else if (entry.type === 'symlink') links.push(entry);
     else await entry.create(dest, options);
     entry = await iterator.next();
   }
@@ -63,16 +78,15 @@ var ZipIterator = require('zip-iterator'));
   const links = [];
   await iterator.forEach(
     async function (entry) {
-      if (entry.type === 'symlink' || entry.type === 'link') links.push(entry);
+      if (entry.type === 'link') links.unshift(entry);
+      else if (entry.type === 'symlink') links.push(entry);
       else await entry.create(dest, options);
     },
     { concurrency: Infinity }
   );
 
   // create links after directories and files
-  for (const entry of links) {
-    await entry.create(dest, options);
-  }
+  for (const entry of links) await entry.create(dest, options);
   iterator.destroy();
   iterator = null;
 })();
@@ -91,7 +105,10 @@ var iterator = new ZipIterator('/path/to/archive');
 var links = [];
 iterator.forEach(
   function (entry, callback) {
-    if (entry.type === 'symlink' || entry.type === 'link') {
+    if (entry.type === 'link') {
+      links.unshift(entry);
+      callback();
+    } else if (entry.type === 'symlink') {
       links.push(entry);
       callback();
     } else entry.create(dest, options, callback);

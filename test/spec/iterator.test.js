@@ -17,7 +17,10 @@ function extract(iterator, dest, options, callback) {
   var links = [];
   iterator.forEach(
     function (entry, callback) {
-      if (entry.type === 'symlink' || entry.type === 'link') {
+      if (entry.type === 'link') {
+        links.unshift(entry);
+        callback();
+      } else if (entry.type === 'symlink') {
         links.push(entry);
         callback();
       } else entry.create(dest, options, callback);
@@ -27,7 +30,7 @@ function extract(iterator, dest, options, callback) {
       if (err) return callback(err);
 
       // create links after directories and files
-      var queue = new Queue();
+      var queue = new Queue(1);
       for (var index = 0; index < links.length; index++) {
         var entry = links[index];
         queue.defer(entry.create.bind(entry, dest, options));
@@ -42,14 +45,15 @@ function extractPromise(iterator, dest, options, callback) {
   iterator
     .forEach(
       function (entry) {
-        if (entry.type === 'symlink' || entry.type === 'link') links.push(entry);
+        if (entry.type === 'link') links.unshift(entry);
+        else if (entry.type === 'symlink') links.push(entry);
         else return entry.create(dest, options);
       },
       { concurrency: options.concurrency }
     )
     .then(function () {
       // create links after directories and files
-      var queue = new Queue();
+      var queue = new Queue(1);
       for (var index = 0; index < links.length; index++) {
         (function (entry) {
           queue.defer(function (callback) {

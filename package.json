@@ -11,7 +11,10 @@
     "decompress",
     "decompress-zip",
     ".zip",
-    "zip"
+    "zip",
+    "yauzl",
+    "zip-stream",
+    "stream"
   ],
   "homepage": "https://github.com/kmalakoff/zip-iterator",
   "repository": {

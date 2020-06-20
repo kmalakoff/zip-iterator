@@ -75,6 +75,28 @@ describe('iterator', function () {
   });
 
   describe('happy path', function () {
+    it('destroy iterator', function () {
+      var iterator = new ZipIterator(path.join(DATA_DIR, 'fixture.zip'));
+      iterator.destroy();
+      assert.ok(true);
+    });
+
+    it('destroy entries', function (done) {
+      var iterator = new ZipIterator(path.join(DATA_DIR, 'fixture.zip'));
+      var lock = iterator.lock;
+      iterator.forEach(
+        function (entry) {
+          entry.destroy();
+        },
+        function (err) {
+          assert.ok(!err);
+          assert.ok(!iterator.lock);
+          assert.equal(lock.__LC.ref_count, 0);
+          done();
+        }
+      );
+    });
+
     it('extract - no strip - concurrency 1', function (done) {
       var options = { now: new Date(), concurrency: 1 };
       extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, function (err) {

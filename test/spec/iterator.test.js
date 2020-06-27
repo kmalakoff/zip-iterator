@@ -4,6 +4,8 @@ var mkpath = require('mkpath');
 var path = require('path');
 var fs = require('fs');
 var Queue = require('queue-cb');
+var bz2 = require('unbzip2-stream');
+var zlib = require('zlib');
 
 var ZipIterator = require('../..');
 var validateFiles = require('../lib/validateFiles');
@@ -137,10 +139,39 @@ describe('iterator', function () {
 
     it('extract - stream', function (done) {
       var options = { now: new Date() };
-      extract(new ZipIterator(fs.createReadStream(path.join(DATA_DIR, 'fixture.zip'))), TARGET, options, function (err) {
+      var source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip'));
+      extract(new ZipIterator(source), TARGET, options, function (err) {
         assert.ok(!err);
 
-        validateFiles(options, 'zip', function (err) {
+        validateFiles(options, 'tar', function (err) {
+          assert.ok(!err);
+          done();
+        });
+      });
+    });
+
+    it('extract - stream bz2', function (done) {
+      var options = { now: new Date() };
+      var source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip.bz2'));
+      source = source.pipe(bz2());
+      extract(new ZipIterator(source), TARGET, options, function (err) {
+        assert.ok(!err);
+
+        validateFiles(options, 'tar', function (err) {
+          assert.ok(!err);
+          done();
+        });
+      });
+    });
+
+    it('extract - stream gz', function (done) {
+      var options = { now: new Date() };
+      var source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip.gz'));
+      source = source.pipe(zlib.createUnzip());
+      extract(new ZipIterator(source), TARGET, options, function (err) {
+        assert.ok(!err);
+
+        validateFiles(options, 'tar', function (err) {
           assert.ok(!err);
           done();
         });

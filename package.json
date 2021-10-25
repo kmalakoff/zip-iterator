@@ -1,6 +1,6 @@
 {
   "name": "zip-iterator",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Extract contents from zip archive type using an iterator API using streams or paths. Use stream interface and pipe transforms to add decompression algorithms",
   "keywords": [
     "extract",
@@ -34,7 +34,6 @@
     "end-of-stream": "^1.4.4",
     "extract-base-iterator": "^0.2.5",
     "fs-access-compat": "^1.0.2",
-    "graceful-fs": "^4.2.6",
     "inherits": "^2.0.4",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
@@ -63,7 +62,7 @@
     "fs-stats-spys": "^1.0.1",
     "mocha-compat": "^3.5.5",
     "object-assign": "^4.1.1",
-    "prettier": "^2.3.2",
+    "prettier": "^2.4.1",
     "unbzip2-stream": "^1.4.3"
   },
   "engines": {

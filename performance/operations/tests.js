@@ -1,5 +1,5 @@
 var path = require('path');
-var fs = require('graceful-fs');
+var fs = require('fs');
 var rimraf = require('rimraf');
 var BenchmarkSuite = require('benchmark-suite');
 

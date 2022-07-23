@@ -49,6 +49,7 @@
     "readable-stream": "^2.3.7",
     "rimraf": "^2.7.1",
     "temp-suffix": "^0.1.1",
+    "unzip": "^0.1.11",
     "yauzl": "^2.10.0"
   },
   "devDependencies": {

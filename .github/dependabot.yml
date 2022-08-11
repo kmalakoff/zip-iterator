@@ -5,8 +5,8 @@ updates:
     schedule:
       interval: daily
     ignore:
-      - dependency-name: 'readable-stream'
       - dependency-name: 'rimraf'
+      - dependency-name: 'bops'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:

@@ -87,15 +87,12 @@ describe('iterator', function () {
 
     it('destroy entries', function (done) {
       var iterator = new ZipIterator(path.join(DATA_DIR, 'fixture.zip'));
-      var lock = iterator.lock;
       iterator.forEach(
         function (entry) {
           entry.destroy();
         },
         function (err) {
           assert.ok(!err);
-          assert.ok(!iterator.lock);
-          assert.equal(lock.__LC.ref_count, 0);
           done();
         }
       );

@@ -38,18 +38,14 @@
   "dependencies": {
     "end-of-stream": "^1.4.4",
     "extract-base-iterator": "^0.2.6",
-    "fs-access-compat": "^1.0.3",
     "inherits": "^2.0.4",
-    "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkpath": "^1.0.0",
-    "next-tick": "^1.1.0",
+    "bops": "~0.1.1",
     "once": "^1.4.0",
     "queue-cb": "^1.1.7",
-    "readable-stream": "^2.3.7",
     "rimraf": "^2.7.1",
     "temp-suffix": "^0.1.1",
-    "yauzl": "^2.10.0",
     "zip": "^1.2.0"
   },
   "devDependencies": {

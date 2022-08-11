@@ -51,13 +51,13 @@ describe('asyncAwait', function () {
   });
 
   describe('happy path', function () {
-    it.only('extract - no strip - concurrency 1', async function () {
+    it('extract - no strip - concurrency 1', async function () {
       var options = { now: new Date(), concurrency: 1 };
       try {
         await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
         await validateFiles(options, 'zip');
       } catch (err) {
-        console.log(err)
+        console.log(err);
         assert.ok(!err);
       }
     });

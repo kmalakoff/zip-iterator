@@ -7,6 +7,7 @@ updates:
     ignore:
       - dependency-name: 'rimraf'
       - dependency-name: 'bops'
+      - dependency-name: 'readable-stream'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:

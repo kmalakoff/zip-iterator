@@ -57,7 +57,6 @@ describe('asyncAwait', function () {
         await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
         await validateFiles(options, 'zip');
       } catch (err) {
-        console.log(err);
         assert.ok(!err);
       }
     });

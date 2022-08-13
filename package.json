@@ -36,14 +36,15 @@
     "test:engines": "nvu engines npm test"
   },
   "dependencies": {
+    "bops": "~0.1.1",
     "end-of-stream": "^1.4.4",
     "extract-base-iterator": "^0.2.6",
     "inherits": "^2.0.4",
     "lodash.compact": "^3.0.1",
     "mkpath": "^1.0.0",
-    "bops": "~0.1.1",
     "once": "^1.4.0",
     "queue-cb": "^1.1.7",
+    "readable-stream": "^2.3.7",
     "rimraf": "^2.7.1",
     "temp-suffix": "^0.1.1",
     "zip": "^1.2.0"

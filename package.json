@@ -36,10 +36,13 @@
     "test:engines": "nvu engines npm test"
   },
   "dependencies": {
-    "bops": "~0.1.1",
+    "buffer-v6-polyfill": "^1.0.5",
     "end-of-stream": "^1.4.4",
     "extract-base-iterator": "^0.2.6",
+    "fs-access-compat": "^1.0.3",
+    "graceful-fs": "^4.2.10",
     "inherits": "^2.0.4",
+    "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",
     "mkpath": "^1.0.0",
     "once": "^1.4.0",

@@ -40,7 +40,6 @@
     "end-of-stream": "^1.4.4",
     "extract-base-iterator": "^0.2.6",
     "fs-access-compat": "^1.0.3",
-    "graceful-fs": "^4.2.10",
     "inherits": "^2.0.4",
     "lifecycle": "^1.0.4",
     "lodash.compact": "^3.0.1",

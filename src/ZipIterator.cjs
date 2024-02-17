@@ -8,11 +8,11 @@ const tmpdir = require('os').tmpdir || require('os-shim').tmpdir;
 const shortHash = require('short-hash');
 const tempSuffix = require('temp-suffix');
 
-const nextEntry = require('./nextEntry');
-const fifoRemove = require('./lib/fifoRemove');
-const Zip = require('./lib/Zip');
-const Lock = require('./lib/Lock');
-const streamToFile = require('./lib/streamToFile');
+const nextEntry = require('./nextEntry.cjs');
+const fifoRemove = require('./lib/fifoRemove.cjs');
+const Zip = require('./lib/Zip.cjs');
+const Lock = require('./lib/Lock.cjs');
+const streamToFile = require('./lib/streamToFile.cjs');
 
 function ZipIterator(source, options) {
   if (!(this instanceof ZipIterator)) return new ZipIterator(source, options);

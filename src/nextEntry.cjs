@@ -4,12 +4,12 @@ const compact = require('lodash.compact');
 
 const BaseIterator = require('extract-base-iterator').default;
 const DirectoryEntry = BaseIterator.DirectoryEntry;
-const FileEntry = require('./FileEntry');
+const FileEntry = require('./FileEntry.cjs');
 const LinkEntry = BaseIterator.LinkEntry;
 const SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
 
-const parseExternalFileAttributes = require('./lib/parseExternalFileAttributes');
-const streamToString = require('./lib/streamToString');
+const parseExternalFileAttributes = require('./lib/parseExternalFileAttributes.cjs');
+const streamToString = require('./lib/streamToString.cjs');
 
 function nextEntry(iterator, callback) {
   if (!iterator.iterator) return callback(new Error('iterator missing'));

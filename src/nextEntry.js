@@ -1,20 +1,20 @@
-var once = require('once');
-var path = require('path');
-var compact = require('lodash.compact');
+const once = require('once');
+const path = require('path');
+const compact = require('lodash.compact');
 
-var BaseIterator = require('extract-base-iterator');
-var DirectoryEntry = BaseIterator.DirectoryEntry;
-var FileEntry = require('./FileEntry');
-var LinkEntry = BaseIterator.LinkEntry;
-var SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
+const BaseIterator = require('extract-base-iterator').default;
+const DirectoryEntry = BaseIterator.DirectoryEntry;
+const FileEntry = require('./FileEntry');
+const LinkEntry = BaseIterator.LinkEntry;
+const SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
 
-var parseExternalFileAttributes = require('./lib/parseExternalFileAttributes');
-var streamToString = require('./lib/streamToString');
+const parseExternalFileAttributes = require('./lib/parseExternalFileAttributes');
+const streamToString = require('./lib/streamToString');
 
 function nextEntry(iterator, callback) {
   if (!iterator.iterator) return callback(new Error('iterator missing'));
 
-  var entry = null;
+  let entry = null;
   while (!entry) {
     try {
       entry = iterator.iterator.next();
@@ -25,7 +25,7 @@ function nextEntry(iterator, callback) {
     }
   }
 
-  var _callback = callback;
+  const _callback = callback;
   callback = once(function callback(err, entry) {
     // keep processing
     if (entry) iterator.stack.push(nextEntry);
@@ -35,10 +35,10 @@ function nextEntry(iterator, callback) {
   // done: use null to indicate iteration is complete
   if (iterator.done || !entry) return callback(null, null);
 
-  var localHeader = entry.localHeader;
-  var centralHeader = entry.centralHeader;
+  const localHeader = entry.localHeader;
+  const centralHeader = entry.centralHeader;
 
-  var attributes = parseExternalFileAttributes(centralHeader.external_file_attributes, centralHeader.version >> 8);
+  const attributes = parseExternalFileAttributes(centralHeader.external_file_attributes, centralHeader.version >> 8);
   attributes.path = compact(localHeader.file_name.split(path.sep)).join(path.sep);
   attributes.mtime = entry.lastModified();
 
@@ -47,11 +47,11 @@ function nextEntry(iterator, callback) {
       return callback(null, new DirectoryEntry(attributes));
     case 'symlink':
     case 'link':
-      return streamToString(entry.getStream(), function (err, string) {
+      return streamToString(entry.getStream(), (err, string) => {
         if (err) return callback(err);
 
         attributes.linkpath = string;
-        var Link = attributes.type === 'symlink' ? SymbolicLinkEntry : LinkEntry;
+        const Link = attributes.type === 'symlink' ? SymbolicLinkEntry : LinkEntry;
         return callback(null, new Link(attributes));
       });
 
@@ -59,7 +59,7 @@ function nextEntry(iterator, callback) {
       return callback(null, new FileEntry(attributes, entry, iterator.lock));
   }
 
-  return callback(new Error('Unrecognized entry type: ' + attributes.type));
+  return callback(new Error(`Unrecognized entry type: ${attributes.type}`));
 }
 
 module.exports = nextEntry;

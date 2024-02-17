@@ -1,7 +1,7 @@
 // From: https://github.com/bower/decompress-zip/blob/master/lib/structures.js
 
 module.exports = function parseExternalFileAttributes(externalAttributes, platform) {
-  var types = {
+  const types = {
     // In theory, any of these could be set. Realistically, though, it will
     // be regular, directory or symlink
     1: 'namedpipe',
@@ -22,12 +22,12 @@ module.exports = function parseExternalFileAttributes(externalAttributes, platfo
       };
 
     // case 0: // MSDOS
-    default:
+    default: {
       if (platform !== 0) {
-        console.warn('Possibly unsupported ZIP platform type, ' + platform);
+        console.warn(`Possibly unsupported ZIP platform type, ${platform}`);
       }
 
-      var attribs = {
+      const attribs = {
         A: (externalAttributes >> 5) & 0x01,
         D: (externalAttributes >> 4) & 0x01,
         V: (externalAttributes >> 3) & 0x01,
@@ -37,14 +37,14 @@ module.exports = function parseExternalFileAttributes(externalAttributes, platfo
       };
 
       // With no better guidance we'll make the default permissions ugo+r
-      var mode = parseInt('0444', 8);
+      let mode = 0o0444;
 
       if (attribs.D) {
-        mode |= parseInt('0111', 8); // Set the execute bit
+        mode |= 0o0111; // Set the execute bit
       }
 
       if (!attribs.R) {
-        mode |= parseInt('0222', 8); // Set the write bit
+        mode |= 0o0222; // Set the write bit
       }
 
       mode &= ~process.umask();
@@ -54,5 +54,6 @@ module.exports = function parseExternalFileAttributes(externalAttributes, platfo
         type: attribs.D ? 'directory' : 'file',
         mode: mode,
       };
+    }
   }
 };

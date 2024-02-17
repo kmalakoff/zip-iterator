@@ -1,17 +1,17 @@
-var LC = require('lifecycle');
-var rimraf = require('rimraf');
-var fs = require('fs');
-var BaseIterator = require('extract-base-iterator');
+const LC = require('lifecycle');
+const rimraf = require('rimraf');
+const fs = require('fs');
+const BaseIterator = require('extract-base-iterator').default;
 
 module.exports = LC.RefCountable.extend({
   constructor: function () {
-    LC.RefCountable.prototype.constructor.apply(this, arguments);
+    LC.RefCountable.prototype.constructor.call(this);
   },
   __destroy: function () {
     if (this.tempPath) {
       try {
         rimraf.sync(this.tempPath);
-      } catch (err) {
+      } catch (_err) {
         /* empty */
       }
       this.tempPath = null;

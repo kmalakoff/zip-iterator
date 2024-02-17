@@ -16,4 +16,4 @@ declare class ZipIterator {
     };
     end(err: any): void;
 }
-import Zip = require("./lib/Zip");
+import Zip = require("./lib/Zip.cjs");

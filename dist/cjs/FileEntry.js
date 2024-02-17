@@ -3,7 +3,7 @@ var inherits = require("inherits");
 var BaseIterator = require("extract-base-iterator").default;
 var fs = require("fs");
 var eos = require("end-of-stream");
-var waitForAccess = require("./lib/waitForAccess");
+var waitForAccess = require("./lib/waitForAccess.js");
 function FileEntry(attributes, entry, lock) {
     BaseIterator.FileEntry.call(this, attributes);
     this.entry = entry;

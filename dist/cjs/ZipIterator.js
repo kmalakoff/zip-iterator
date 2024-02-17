@@ -14,11 +14,11 @@ var Queue = require("queue-cb");
 var tmpdir = require("os").tmpdir || require("os-shim").tmpdir;
 var shortHash = require("short-hash");
 var tempSuffix = require("temp-suffix");
-var nextEntry = require("./nextEntry");
-var fifoRemove = require("./lib/fifoRemove");
-var Zip = require("./lib/Zip");
-var Lock = require("./lib/Lock");
-var streamToFile = require("./lib/streamToFile");
+var nextEntry = require("./nextEntry.js");
+var fifoRemove = require("./lib/fifoRemove.js");
+var Zip = require("./lib/Zip.js");
+var Lock = require("./lib/Lock.js");
+var streamToFile = require("./lib/streamToFile.js");
 function ZipIterator(source, options) {
     var _this = this;
     if (!_instanceof(this, ZipIterator)) return new ZipIterator(source, options);

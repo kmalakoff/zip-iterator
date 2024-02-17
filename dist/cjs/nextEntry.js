@@ -4,11 +4,11 @@ var path = require("path");
 var compact = require("lodash.compact");
 var BaseIterator = require("extract-base-iterator").default;
 var DirectoryEntry = BaseIterator.DirectoryEntry;
-var FileEntry = require("./FileEntry");
+var FileEntry = require("./FileEntry.js");
 var LinkEntry = BaseIterator.LinkEntry;
 var SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
-var parseExternalFileAttributes = require("./lib/parseExternalFileAttributes");
-var streamToString = require("./lib/streamToString");
+var parseExternalFileAttributes = require("./lib/parseExternalFileAttributes.js");
+var streamToString = require("./lib/streamToString.js");
 function nextEntry(iterator, callback) {
     if (!iterator.iterator) return callback(new Error("iterator missing"));
     var entry = null;

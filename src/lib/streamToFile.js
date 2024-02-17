@@ -1,11 +1,11 @@
-var fs = require('fs');
-var path = require('path');
-var mkpath = require('mkpath');
-var eos = require('end-of-stream');
+const fs = require('fs');
+const path = require('path');
+const mkpath = require('mkpath');
+const eos = require('end-of-stream');
 
 module.exports = function streamToFile(source, filePath, callback) {
-  mkpath.sync(path.dirname(filePath)); // TODO: investigate on why needed to do this sync
-  var err = null;
+  mkpath.sync(path.dirname(filePath)); // sync to not pause the stream
+  let err = null;
   function cleanup() {
     source.removeListener('error', onError);
   }
@@ -15,7 +15,7 @@ module.exports = function streamToFile(source, filePath, callback) {
     callback(err);
   }
   source.on('error', onError);
-  eos(source.pipe(fs.createWriteStream(filePath)), function (err) {
+  eos(source.pipe(fs.createWriteStream(filePath)), (err) => {
     if (err) return;
     cleanup();
     callback(err);

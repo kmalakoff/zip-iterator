@@ -1,17 +1,13 @@
-const once = require('once');
-const path = require('path');
-const compact = require('lodash.compact');
+import once from 'once';
+import path from 'path';
+import compact from 'lodash.compact';
 
-const BaseIterator = require('extract-base-iterator').default;
-const DirectoryEntry = BaseIterator.DirectoryEntry;
-const FileEntry = require('./FileEntry.cjs');
-const LinkEntry = BaseIterator.LinkEntry;
-const SymbolicLinkEntry = BaseIterator.SymbolicLinkEntry;
+import {DirectoryEntry, LinkEntry, SymbolicLinkEntry} from 'extract-base-iterator';
+import FileEntry from './FileEntry.mjs';
+import parseExternalFileAttributes from './lib/parseExternalFileAttributes.mjs';
+import streamToString from './lib/streamToString.mjs';
 
-const parseExternalFileAttributes = require('./lib/parseExternalFileAttributes.cjs');
-const streamToString = require('./lib/streamToString.cjs');
-
-function nextEntry(iterator, callback) {
+export default function nextEntry(iterator, callback) {
   if (!iterator.iterator) return callback(new Error('iterator missing'));
 
   let entry = null;
@@ -61,5 +57,3 @@ function nextEntry(iterator, callback) {
 
   return callback(new Error(`Unrecognized entry type: ${attributes.type}`));
 }
-
-module.exports = nextEntry;

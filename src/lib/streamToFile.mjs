@@ -1,9 +1,9 @@
-const fs = require('fs');
-const path = require('path');
-const mkpath = require('mkpath');
-const eos = require('end-of-stream');
+import fs from 'fs';
+import path from 'path';
+import mkpath from 'mkpath';
+import eos from 'end-of-stream';
 
-module.exports = function streamToFile(source, filePath, callback) {
+export default function streamToFile(source, filePath, callback) {
   mkpath.sync(path.dirname(filePath)); // sync to not pause the stream
   let err = null;
   function cleanup() {

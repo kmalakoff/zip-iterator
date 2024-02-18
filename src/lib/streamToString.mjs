@@ -8,4 +8,4 @@ export default function streamToString(stream, callback) {
   eos(stream, (err) => {
     err ? callback(err) : callback(null, string);
   });
-};
+}

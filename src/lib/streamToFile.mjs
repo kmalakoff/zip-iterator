@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import mkpath from 'mkpath';
 import eos from 'end-of-stream';
+import mkpath from 'mkpath';
 
 export default function streamToFile(source, filePath, callback) {
   mkpath.sync(path.dirname(filePath)); // sync to not pause the stream
@@ -20,4 +20,4 @@ export default function streamToFile(source, filePath, callback) {
     cleanup();
     callback(err);
   });
-};
+}

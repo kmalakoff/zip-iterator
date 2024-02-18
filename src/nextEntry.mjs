@@ -1,8 +1,8 @@
-import once from 'once';
 import path from 'path';
 import compact from 'lodash.compact';
+import once from 'once';
 
-import {DirectoryEntry, LinkEntry, SymbolicLinkEntry} from 'extract-base-iterator';
+import { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
 import FileEntry from './FileEntry.mjs';
 import parseExternalFileAttributes from './lib/parseExternalFileAttributes.mjs';
 import streamToString from './lib/streamToString.mjs';

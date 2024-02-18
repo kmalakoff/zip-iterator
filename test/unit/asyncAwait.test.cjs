@@ -1,4 +1,4 @@
-require('../lib/patch');
+require('../lib/patch.cjs');
 const assert = require('assert');
 const rimraf = require('rimraf');
 const mkpath = require('mkpath');
@@ -6,9 +6,9 @@ const path = require('path');
 const assign = require('just-extend');
 
 const ZipIterator = require('zip-iterator');
-const validateFiles = require('../lib/validateFiles');
+const validateFiles = require('../lib/validateFiles.cjs');
 
-const constants = require('../lib/constants');
+const constants = require('../lib/constants.cjs');
 const TMP_DIR = constants.TMP_DIR;
 const TARGET = constants.TARGET;
 const DATA_DIR = constants.DATA_DIR;
@@ -43,6 +43,8 @@ async function extractForEach(iterator, dest, options) {
 }
 
 describe('asyncAwait', () => {
+  if (typeof Symbol === 'undefined' || !Symbol.asyncIterator) return;
+
   beforeEach((callback) => {
     rimraf(TMP_DIR, (err) => {
       if (err && err.code !== 'EEXIST') return callback(err);

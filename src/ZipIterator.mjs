@@ -1,22 +1,26 @@
-const fs = require('fs');
-const path = require('path');
+import './polyfills.cjs';
+import fs from 'fs';
+import path from 'path';
 
-const inherits = require('inherits');
-const BaseIterator = require('extract-base-iterator').default;
-const Queue = require('queue-cb');
-const tmpdir = require('os').tmpdir || require('os-shim').tmpdir;
-const shortHash = require('short-hash');
-const tempSuffix = require('temp-suffix');
+import BaseIterator from 'extract-base-iterator';
+import Queue from 'queue-cb';
+import shortHash from 'short-hash';
+import tempSuffix from 'temp-suffix';
 
-const nextEntry = require('./nextEntry.cjs');
-const fifoRemove = require('./lib/fifoRemove.cjs');
-const Zip = require('./lib/Zip.cjs');
-const Lock = require('./lib/Lock.cjs');
-const streamToFile = require('./lib/streamToFile.cjs');
+import nextEntry from './nextEntry.mjs';
+import fifoRemove from './lib/fifoRemove.mjs';
+import Zip from './lib/Zip.mjs';
+import Lock from './lib/Lock.mjs';
+import streamToFile from './lib/streamToFile.mjs';
 
-function ZipIterator(source, options) {
-  if (!(this instanceof ZipIterator)) return new ZipIterator(source, options);
-  BaseIterator.call(this, options);
+import os from 'os';
+import osShim from 'os-shim';
+
+const tmpdir  = os.tmpdir || osShim.tmpdir;
+
+export default class ZipIterator extends BaseIterator{
+  constructor (source, options) {
+  super(options);
   this.lock = new Lock();
   this.lock.iterator = this;
 
@@ -37,7 +41,7 @@ function ZipIterator(source, options) {
     fs.open(this.lock.tempPath || source, 'r', '0666', (err, fd) => {
       if (this.done || cancelled) return; // done
       if (err) return callback(err);
-      const reader = Zip(fd);
+      const reader = new Zip(fd);
       this.lock.fd = fd;
       this.iterator = reader.iterator();
       callback();
@@ -52,9 +56,7 @@ function ZipIterator(source, options) {
   });
 }
 
-inherits(ZipIterator, BaseIterator);
-
-ZipIterator.prototype.end = function end(err) {
+end(err) {
   if (this.lock) {
     this.lock.err = err;
     this.lock.release();
@@ -64,5 +66,4 @@ ZipIterator.prototype.end = function end(err) {
   }
   this.iterator = null;
 };
-
-module.exports = ZipIterator;
+}

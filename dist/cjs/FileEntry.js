@@ -8,9 +8,9 @@ Object.defineProperty(exports, "default", {
         return ZipFileEntry;
     }
 });
-var _extractbaseiterator = require("extract-base-iterator");
 var _fs = /*#__PURE__*/ _interop_require_default(require("fs"));
 var _endofstream = /*#__PURE__*/ _interop_require_default(require("end-of-stream"));
+var _extractbaseiterator = require("extract-base-iterator");
 var _waitForAccess = /*#__PURE__*/ _interop_require_default(require("./lib/waitForAccess.js"));
 function _assert_this_initialized(self) {
     if (self === void 0) {

@@ -8,9 +8,9 @@ Object.defineProperty(exports, "default", {
         return nextEntry;
     }
 });
-var _once = /*#__PURE__*/ _interop_require_default(require("once"));
 var _path = /*#__PURE__*/ _interop_require_default(require("path"));
 var _lodashcompact = /*#__PURE__*/ _interop_require_default(require("lodash.compact"));
+var _once = /*#__PURE__*/ _interop_require_default(require("once"));
 var _extractbaseiterator = require("extract-base-iterator");
 var _FileEntry = /*#__PURE__*/ _interop_require_default(require("./FileEntry.js"));
 var _parseExternalFileAttributes = /*#__PURE__*/ _interop_require_default(require("./lib/parseExternalFileAttributes.js"));

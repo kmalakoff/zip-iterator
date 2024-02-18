@@ -8,10 +8,10 @@ Object.defineProperty(exports, "default", {
         return _default;
     }
 });
-var _lifecycle = /*#__PURE__*/ _interop_require_default(require("lifecycle"));
-var _rimraf = /*#__PURE__*/ _interop_require_default(require("rimraf"));
 var _fs = /*#__PURE__*/ _interop_require_default(require("fs"));
 var _extractbaseiterator = /*#__PURE__*/ _interop_require_default(require("extract-base-iterator"));
+var _lifecycle = /*#__PURE__*/ _interop_require_default(require("lifecycle"));
+var _rimraf = /*#__PURE__*/ _interop_require_default(require("rimraf"));
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
         default: obj

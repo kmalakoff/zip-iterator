@@ -8,18 +8,18 @@ Object.defineProperty(exports, "default", {
         return ZipIterator;
     }
 });
-require("./polyfills.js");
 var _fs = /*#__PURE__*/ _interop_require_default(require("fs"));
 var _path = /*#__PURE__*/ _interop_require_default(require("path"));
+require("./polyfills.js");
 var _extractbaseiterator = /*#__PURE__*/ _interop_require_default(require("extract-base-iterator"));
 var _queuecb = /*#__PURE__*/ _interop_require_default(require("queue-cb"));
 var _shorthash = /*#__PURE__*/ _interop_require_default(require("short-hash"));
 var _tempsuffix = /*#__PURE__*/ _interop_require_default(require("temp-suffix"));
-var _nextEntry = /*#__PURE__*/ _interop_require_default(require("./nextEntry.js"));
-var _fifoRemove = /*#__PURE__*/ _interop_require_default(require("./lib/fifoRemove.js"));
-var _Zip = /*#__PURE__*/ _interop_require_default(require("./lib/Zip.js"));
 var _Lock = /*#__PURE__*/ _interop_require_default(require("./lib/Lock.js"));
+var _Zip = /*#__PURE__*/ _interop_require_default(require("./lib/Zip.js"));
+var _fifoRemove = /*#__PURE__*/ _interop_require_default(require("./lib/fifoRemove.js"));
 var _streamToFile = /*#__PURE__*/ _interop_require_default(require("./lib/streamToFile.js"));
+var _nextEntry = /*#__PURE__*/ _interop_require_default(require("./nextEntry.js"));
 var _os = /*#__PURE__*/ _interop_require_default(require("os"));
 var _osshim = /*#__PURE__*/ _interop_require_default(require("os-shim"));
 function _assert_this_initialized(self) {

@@ -6,4 +6,4 @@ export default function fifoRemove(fifo, value) {
     }
   }
   return false;
-};
+}

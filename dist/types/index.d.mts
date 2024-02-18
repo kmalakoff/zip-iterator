@@ -1,3 +1,3 @@
-export { default as Zip } from "./lib/Zip.cjs";
 export default ZipIterator;
-import ZipIterator from './ZipIterator.cjs';
+export { default as FileEntry } from "./FileEntry.mjs";
+import ZipIterator from './ZipIterator.mjs';

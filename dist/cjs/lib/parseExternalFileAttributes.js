@@ -1,6 +1,15 @@
 // From: https://github.com/bower/decompress-zip/blob/master/lib/structures.js
 "use strict";
-module.exports = function parseExternalFileAttributes(externalAttributes, platform) {
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "default", {
+    enumerable: true,
+    get: function() {
+        return parseExternalFileAttributes;
+    }
+});
+function parseExternalFileAttributes(externalAttributes, platform) {
     var types = {
         // In theory, any of these could be set. Realistically, though, it will
         // be regular, directory or symlink
@@ -49,10 +58,5 @@ module.exports = function parseExternalFileAttributes(externalAttributes, platfo
                 };
             }
     }
-};
-
-if ((typeof exports.default === 'function' || (typeof exports.default === 'object' && exports.default !== null)) && typeof exports.default.__esModule === 'undefined') {
-  Object.defineProperty(exports.default, '__esModule', { value: true });
-  for (var key in exports) exports.default[key] = exports[key];
-  module.exports = exports.default;
 }
+/* CJS INTEROP */ if (exports.__esModule && exports.default) { module.exports = exports.default; for (var key in exports) module.exports[key] = exports[key]; }

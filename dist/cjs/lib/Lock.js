@@ -1,33 +1,42 @@
 "use strict";
-var LC = require("lifecycle");
-var rimraf = require("rimraf");
-var fs = require("fs");
-var BaseIterator = require("extract-base-iterator").default;
-module.exports = LC.RefCountable.extend({
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+Object.defineProperty(exports, "default", {
+    enumerable: true,
+    get: function() {
+        return _default;
+    }
+});
+var _lifecycle = /*#__PURE__*/ _interop_require_default(require("lifecycle"));
+var _rimraf = /*#__PURE__*/ _interop_require_default(require("rimraf"));
+var _fs = /*#__PURE__*/ _interop_require_default(require("fs"));
+var _extractbaseiterator = /*#__PURE__*/ _interop_require_default(require("extract-base-iterator"));
+function _interop_require_default(obj) {
+    return obj && obj.__esModule ? obj : {
+        default: obj
+    };
+}
+var _default = _lifecycle.default.RefCountable.extend({
     constructor: function constructor() {
-        LC.RefCountable.prototype.constructor.call(this);
+        _lifecycle.default.RefCountable.prototype.constructor.call(this);
     },
     __destroy: function __destroy() {
         if (this.tempPath) {
             try {
-                rimraf.sync(this.tempPath);
+                _rimraf.default.sync(this.tempPath);
             } catch (_err) {
             /* empty */ }
             this.tempPath = null;
         }
         if (this.fd) {
-            fs.closeSync(this.fd);
+            _fs.default.closeSync(this.fd);
             this.fd = null;
         }
         if (this.iterator) {
-            BaseIterator.prototype.end.call(this.iterator, this.err || null);
+            _extractbaseiterator.default.prototype.end.call(this.iterator, this.err || null);
             this.iterator = null;
         }
     }
 });
-
-if ((typeof exports.default === 'function' || (typeof exports.default === 'object' && exports.default !== null)) && typeof exports.default.__esModule === 'undefined') {
-  Object.defineProperty(exports.default, '__esModule', { value: true });
-  for (var key in exports) exports.default[key] = exports[key];
-  module.exports = exports.default;
-}
+/* CJS INTEROP */ if (exports.__esModule && exports.default) { module.exports = exports.default; for (var key in exports) module.exports[key] = exports[key]; }

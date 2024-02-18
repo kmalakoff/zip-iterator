@@ -1,9 +1,9 @@
-const LC = require('lifecycle');
-const rimraf = require('rimraf');
-const fs = require('fs');
-const BaseIterator = require('extract-base-iterator').default;
+import LC from 'lifecycle';
+import rimraf from 'rimraf';
+import fs from 'fs';
+import BaseIterator from 'extract-base-iterator';
 
-module.exports = LC.RefCountable.extend({
+export default LC.RefCountable.extend({
   constructor: function () {
     LC.RefCountable.prototype.constructor.call(this);
   },

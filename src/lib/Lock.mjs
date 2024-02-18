@@ -1,7 +1,7 @@
-import LC from 'lifecycle';
-import rimraf from 'rimraf';
 import fs from 'fs';
 import BaseIterator from 'extract-base-iterator';
+import LC from 'lifecycle';
+import rimraf from 'rimraf';
 
 export default LC.RefCountable.extend({
   constructor: function () {

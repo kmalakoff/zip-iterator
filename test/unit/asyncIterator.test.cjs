@@ -3,7 +3,6 @@ const assert = require('assert');
 const rimraf = require('rimraf');
 const mkpath = require('mkpath');
 const path = require('path');
-const assign = require('just-extend');
 
 const ZipIterator = require('zip-iterator');
 const validateFiles = require('../lib/validateFiles.cjs');
@@ -67,7 +66,7 @@ describe('asyncIterator', () => {
         } catch (err) {
           assert.ok(err);
         }
-        await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, assign({ force: true }, options));
+        await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, Object.assign({ force: true }, options));
         await validateFiles(options, 'tar');
       } catch (err) {
         assert.ok(!err);

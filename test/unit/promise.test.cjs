@@ -3,7 +3,6 @@ const assert = require('assert');
 const rimraf = require('rimraf');
 const mkpath = require('mkpath');
 const path = require('path');
-const assign = require('just-extend');
 const fs = require('fs');
 const Queue = require('queue-cb');
 const bz2 = require('unbzip2-stream');
@@ -161,7 +160,7 @@ describe('promise', () => {
           extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
             assert.ok(err);
 
-            extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, assign({ force: true }, options), (err) => {
+            extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, Object.assign({ force: true }, options), (err) => {
               assert.ok(!err);
 
               validateFiles(options, 'tar', (err) => {

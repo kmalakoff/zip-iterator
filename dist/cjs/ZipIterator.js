@@ -28,6 +28,10 @@ function _assert_this_initialized(self) {
     }
     return self;
 }
+function _call_super(_this, derived, args) {
+    derived = _get_prototype_of(derived);
+    return _possible_constructor_return(_this, _is_native_reflect_construct() ? Reflect.construct(derived, args || [], _get_prototype_of(_this).constructor) : derived.apply(_this, args));
+}
 function _class_call_check(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
         throw new TypeError("Cannot call a class as a function");
@@ -89,53 +93,38 @@ function _type_of(obj) {
     return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj;
 }
 function _is_native_reflect_construct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
     try {
-        Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {}));
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-function _create_super(Derived) {
-    var hasNativeReflectConstruct = _is_native_reflect_construct();
-    return function _createSuperInternal() {
-        var Super = _get_prototype_of(Derived), result;
-        if (hasNativeReflectConstruct) {
-            var NewTarget = _get_prototype_of(this).constructor;
-            result = Reflect.construct(Super, arguments, NewTarget);
-        } else {
-            result = Super.apply(this, arguments);
-        }
-        return _possible_constructor_return(this, result);
-    };
+        var result = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {}));
+    } catch (_) {}
+    return (_is_native_reflect_construct = function() {
+        return !!result;
+    })();
 }
 var tmpdir = _os.default.tmpdir || _osshim.default.tmpdir;
 var ZipIterator = /*#__PURE__*/ function(BaseIterator) {
     "use strict";
     _inherits(ZipIterator, BaseIterator);
-    var _super = _create_super(ZipIterator);
     function ZipIterator(source, options) {
         _class_call_check(this, ZipIterator);
         var _this;
         var setup = function setup() {
             cancelled = true;
         };
-        _this = _super.call(this, options);
+        _this = _call_super(this, ZipIterator, [
+            options
+        ]);
         _this.lock = new _Lock.default();
-        _this.lock.iterator = _assert_this_initialized(_this);
+        _this.lock.iterator = _this;
         var queue = (0, _queuecb.default)(1);
         var cancelled = false;
         _this.processing.push(setup);
-        if (typeof source !== "string") {
-            _this.lock.tempPath = _path.default.join(tmpdir(), "zip-iterator", (0, _shorthash.default)(process.cwd()), (0, _tempsuffix.default)("tmp.zip"));
+        if (typeof source !== 'string') {
+            _this.lock.tempPath = _path.default.join(tmpdir(), 'zip-iterator', (0, _shorthash.default)(process.cwd()), (0, _tempsuffix.default)('tmp.zip'));
             queue.defer(_streamToFile.default.bind(null, source, _this.lock.tempPath));
         }
         // open zip
         queue.defer(function(callback) {
-            _fs.default.open(_this.lock.tempPath || source, "r", "0666", function(err, fd) {
+            _fs.default.open(_this.lock.tempPath || source, 'r', '0666', function(err, fd) {
                 if (_this.done || cancelled) return; // done
                 if (err) return callback(err);
                 var reader = new _Zip.default(fd);

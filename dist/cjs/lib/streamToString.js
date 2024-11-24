@@ -15,8 +15,8 @@ function _interop_require_default(obj) {
     };
 }
 function streamToString(stream, callback) {
-    var string = "";
-    stream.on("data", function(chunk) {
+    var string = '';
+    stream.on('data', function(chunk) {
         string += chunk.toString();
     });
     (0, _endofstream.default)(stream, function(err) {

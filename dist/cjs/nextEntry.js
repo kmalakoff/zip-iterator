@@ -21,14 +21,14 @@ function _interop_require_default(obj) {
     };
 }
 function nextEntry(iterator, callback) {
-    if (!iterator.iterator) return callback(new Error("iterator missing"));
+    if (!iterator.iterator) return callback(new Error('iterator missing'));
     var entry = null;
     while(!entry){
         try {
             entry = iterator.iterator.next();
         } catch (err) {
-            if (err === "stop-iteration") break;
-            if (err === "skip-iteration") continue;
+            if (err === 'stop-iteration') break;
+            if (err === 'skip-iteration') continue;
             throw err;
         }
     }
@@ -46,17 +46,17 @@ function nextEntry(iterator, callback) {
     attributes.path = (0, _lodashcompact.default)(localHeader.file_name.split(_path.default.sep)).join(_path.default.sep);
     attributes.mtime = entry.lastModified();
     switch(attributes.type){
-        case "directory":
+        case 'directory':
             return callback(null, new _extractbaseiterator.DirectoryEntry(attributes));
-        case "symlink":
-        case "link":
+        case 'symlink':
+        case 'link':
             return (0, _streamToString.default)(entry.getStream(), function(err, string) {
                 if (err) return callback(err);
                 attributes.linkpath = string;
-                var Link = attributes.type === "symlink" ? _extractbaseiterator.SymbolicLinkEntry : _extractbaseiterator.LinkEntry;
+                var Link = attributes.type === 'symlink' ? _extractbaseiterator.SymbolicLinkEntry : _extractbaseiterator.LinkEntry;
                 return callback(null, new Link(attributes));
             });
-        case "file":
+        case 'file':
             return callback(null, new _FileEntry.default(attributes, entry, iterator.lock));
     }
     return callback(new Error("Unrecognized entry type: ".concat(attributes.type)));

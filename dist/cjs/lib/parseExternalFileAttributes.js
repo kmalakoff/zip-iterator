@@ -13,18 +13,18 @@ function parseExternalFileAttributes(externalAttributes, platform) {
     var types = {
         // In theory, any of these could be set. Realistically, though, it will
         // be regular, directory or symlink
-        1: "namedpipe",
-        2: "character",
-        4: "directory",
-        6: "block",
-        8: "file",
-        10: "symlink",
-        12: "socket"
+        1: 'namedpipe',
+        2: 'character',
+        4: 'directory',
+        6: 'block',
+        8: 'file',
+        10: 'symlink',
+        12: 'socket'
     };
     switch(platform){
         case 3:
             return {
-                platform: "Unix",
+                platform: 'Unix',
                 type: types[externalAttributes >> 28 & 0x0f],
                 mode: externalAttributes >> 16 & 0xfff
             };
@@ -52,8 +52,8 @@ function parseExternalFileAttributes(externalAttributes, platform) {
                 }
                 mode &= ~process.umask();
                 return {
-                    platform: "DOS",
-                    type: attribs.D ? "directory" : "file",
+                    platform: 'DOS',
+                    type: attribs.D ? 'directory' : 'file',
                     mode: mode
                 };
             }

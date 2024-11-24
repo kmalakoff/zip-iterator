@@ -1,4 +1,3 @@
-/// <reference types="node" />
 export default class ZipIterator {
     constructor(source: any, options: any);
     lock: any;

@@ -1,4 +1,4 @@
 {
   "upgrade": true,
-  "reject": ["rimraf", "bops", "readable-stream"]
+  "reject": ["bops", "readable-stream"]
 }

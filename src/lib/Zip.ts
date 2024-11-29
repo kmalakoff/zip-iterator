@@ -6,12 +6,20 @@ import zlib from 'zlib';
 
 const decodeDateTime = (date, time) => new Date((date >>> 9) + 1980, ((date >>> 5) & 15) - 1, date & 31, (time >>> 11) & 31, (time >>> 5) & 63, (time & 63) * 2);
 
+interface Source {
+  read(start, length): Buffer;
+}
+
+interface ReaderT {
+  _source: Source;
+}
+
 export default class Zip extends Reader {
   constructor(fd) {
     super(fd);
 
     // patch pos
-    this._source.read = (start, length) => {
+    (this as unknown as ReaderT)._source.read = (start, length) => {
       const result = Buffer.alloc(length);
       let pos = 0;
       while (length > 0) {
@@ -26,7 +34,7 @@ export default class Zip extends Reader {
   }
 
   iterator() {
-    const stream = this;
+    const stream = this as Reader;
 
     // find the end record and read it
     stream.locateEndOfCentralDirectoryRecord();

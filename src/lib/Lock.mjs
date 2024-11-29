@@ -1,7 +1,7 @@
 import fs from 'fs';
 import BaseIterator from 'extract-base-iterator';
 import LC from 'lifecycle';
-import rimraf from 'rimraf';
+import rimraf2 from 'rimraf2';
 
 export default LC.RefCountable.extend({
   constructor: function () {
@@ -10,7 +10,7 @@ export default LC.RefCountable.extend({
   __destroy: function () {
     if (this.tempPath) {
       try {
-        rimraf.sync(this.tempPath);
+        rimraf2.sync(this.tempPath, { disableGlob: true });
       } catch (_err) {
         /* empty */
       }

@@ -8,7 +8,7 @@ import shortHash from 'short-hash';
 import tempSuffix from 'temp-suffix';
 
 import Lock from './lib/Lock.mjs';
-import Zip from './lib/Zip.mjs';
+import Zip from './lib/Zip.js';
 import fifoRemove from './lib/fifoRemove.mjs';
 import streamToFile from './lib/streamToFile.mjs';
 import nextEntry from './nextEntry.mjs';

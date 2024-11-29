@@ -18,6 +18,10 @@ function _assert_this_initialized(self) {
     }
     return self;
 }
+function _call_super(_this, derived, args) {
+    derived = _get_prototype_of(derived);
+    return _possible_constructor_return(_this, _is_native_reflect_construct() ? Reflect.construct(derived, args || [], _get_prototype_of(_this).constructor) : derived.apply(_this, args));
+}
 function _class_call_check(instance, Constructor) {
     if (!(instance instanceof Constructor)) {
         throw new TypeError("Cannot call a class as a function");
@@ -79,28 +83,12 @@ function _type_of(obj) {
     return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj;
 }
 function _is_native_reflect_construct() {
-    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-    if (Reflect.construct.sham) return false;
-    if (typeof Proxy === "function") return true;
     try {
-        Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {}));
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-function _create_super(Derived) {
-    var hasNativeReflectConstruct = _is_native_reflect_construct();
-    return function _createSuperInternal() {
-        var Super = _get_prototype_of(Derived), result;
-        if (hasNativeReflectConstruct) {
-            var NewTarget = _get_prototype_of(this).constructor;
-            result = Reflect.construct(Super, arguments, NewTarget);
-        } else {
-            result = Super.apply(this, arguments);
-        }
-        return _possible_constructor_return(this, result);
-    };
+        var result = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {}));
+    } catch (_) {}
+    return (_is_native_reflect_construct = function() {
+        return !!result;
+    })();
 }
 var decodeDateTime = function(date, time) {
     return new Date((date >>> 9) + 1980, (date >>> 5 & 15) - 1, date & 31, time >>> 11 & 31, time >>> 5 & 63, (time & 63) * 2);
@@ -108,12 +96,12 @@ var decodeDateTime = function(date, time) {
 var Zip = /*#__PURE__*/ function(Reader) {
     "use strict";
     _inherits(Zip, Reader);
-    var _super = _create_super(Zip);
     function Zip(fd) {
         _class_call_check(this, Zip);
         var _this;
-        _this = _super.call(this, fd);
-        // patch pos
+        _this = _call_super(this, Zip, [
+            fd
+        ]);
         _this._source.read = function(start, length) {
             var result = Buffer.alloc(length);
             var pos = 0;
@@ -141,7 +129,7 @@ var Zip = /*#__PURE__*/ function(Reader) {
                 var count = endRecord.central_dir_disk_records;
                 return {
                     next: function() {
-                        if (count-- === 0) throw "stop-iteration";
+                        if (count-- === 0) throw 'stop-iteration';
                         // read the central directory header
                         var centralHeader = stream.readCentralDirectoryFileHeader();
                         // save our new position so we can restore it

@@ -21,14 +21,14 @@ function streamToFile(source, filePath, callback) {
     _mkpath.default.sync(_path.default.dirname(filePath)); // sync to not pause the stream
     var err = null;
     function cleanup() {
-        source.removeListener("error", onError);
+        source.removeListener('error', onError);
     }
     function onError(_err) {
         err = _err;
         cleanup();
         callback(err);
     }
-    source.on("error", onError);
+    source.on('error', onError);
     (0, _endofstream.default)(source.pipe(_fs.default.createWriteStream(filePath)), function(err) {
         if (err) return;
         cleanup();

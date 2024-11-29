@@ -1,11 +1,10 @@
-/// <reference types="node" />
 export default class ZipIterator {
     constructor(source: any, options: any);
     lock: any;
     iterator: {
         next: () => {
             localHeader: any;
-            stream: Zip;
+            stream: Reader;
             start: any;
             centralHeader: any;
             lastModified: () => Date;
@@ -14,4 +13,3 @@ export default class ZipIterator {
     };
     end(err: any): void;
 }
-import Zip from './lib/Zip.mjs';

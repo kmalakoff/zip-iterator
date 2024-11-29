@@ -11,7 +11,7 @@ Object.defineProperty(exports, "default", {
 var _fs = /*#__PURE__*/ _interop_require_default(require("fs"));
 var _extractbaseiterator = /*#__PURE__*/ _interop_require_default(require("extract-base-iterator"));
 var _lifecycle = /*#__PURE__*/ _interop_require_default(require("lifecycle"));
-var _rimraf = /*#__PURE__*/ _interop_require_default(require("rimraf"));
+var _rimraf2 = /*#__PURE__*/ _interop_require_default(require("rimraf2"));
 function _interop_require_default(obj) {
     return obj && obj.__esModule ? obj : {
         default: obj
@@ -24,7 +24,9 @@ var _default = _lifecycle.default.RefCountable.extend({
     __destroy: function __destroy() {
         if (this.tempPath) {
             try {
-                _rimraf.default.sync(this.tempPath);
+                _rimraf2.default.sync(this.tempPath, {
+                    disableGlob: true
+                });
             } catch (_err) {
             /* empty */ }
             this.tempPath = null;

@@ -65,7 +65,7 @@ describe('callback', () => {
           entry.destroy();
         },
         (err) => {
-          assert.ok(!err);
+          assert.ok(!err, err ? err.message : '');
           done();
         }
       );
@@ -74,10 +74,10 @@ describe('callback', () => {
     it('extract - no strip - concurrency 1', (done) => {
       const options = { now: new Date(), concurrency: 1 };
       extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
-        assert.ok(!err);
+        assert.ok(!err, err ? err.message : '');
 
         validateFiles(options, 'zip', (err) => {
-          assert.ok(!err);
+          assert.ok(!err, err ? err.message : '');
           done();
         });
       });
@@ -86,10 +86,10 @@ describe('callback', () => {
     it('extract - no strip - concurrency Infinity', (done) => {
       const options = { now: new Date(), concurrency: Infinity };
       extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
-        assert.ok(!err);
+        assert.ok(!err, err ? err.message : '');
 
         validateFiles(options, 'zip', (err) => {
-          assert.ok(!err);
+          assert.ok(!err, err ? err.message : '');
           done();
         });
       });
@@ -99,10 +99,10 @@ describe('callback', () => {
       const options = { now: new Date() };
       const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip'));
       extract(new ZipIterator(source), TARGET, options, (err) => {
-        assert.ok(!err);
+        assert.ok(!err, err ? err.message : '');
 
         validateFiles(options, 'tar', (err) => {
-          assert.ok(!err);
+          assert.ok(!err, err ? err.message : '');
           done();
         });
       });
@@ -113,10 +113,10 @@ describe('callback', () => {
       let source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip.bz2'));
       source = source.pipe(bz2());
       extract(new ZipIterator(source), TARGET, options, (err) => {
-        assert.ok(!err);
+        assert.ok(!err, err ? err.message : '');
 
         validateFiles(options, 'tar', (err) => {
-          assert.ok(!err);
+          assert.ok(!err, err ? err.message : '');
           done();
         });
       });
@@ -127,10 +127,10 @@ describe('callback', () => {
       let source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip.gz'));
       source = source.pipe(zlib.createUnzip());
       extract(new ZipIterator(source), TARGET, options, (err) => {
-        assert.ok(!err);
+        assert.ok(!err, err ? err.message : '');
 
         validateFiles(options, 'tar', (err) => {
-          assert.ok(!err);
+          assert.ok(!err, err ? err.message : '');
           done();
         });
       });
@@ -139,10 +139,10 @@ describe('callback', () => {
     it('extract - strip 1', (done) => {
       const options = { now: new Date(), strip: 1 };
       extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
-        assert.ok(!err);
+        assert.ok(!err, err ? err.message : '');
 
         validateFiles(options, 'zip', (err) => {
-          assert.ok(!err);
+          assert.ok(!err, err ? err.message : '');
           done();
         });
       });
@@ -151,19 +151,19 @@ describe('callback', () => {
     it('extract multiple times', (done) => {
       const options = { now: new Date(), strip: 1 };
       extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
-        assert.ok(!err);
+        assert.ok(!err, err ? err.message : '');
 
         validateFiles(options, 'tar', (err) => {
-          assert.ok(!err);
+          assert.ok(!err, err ? err.message : '');
 
           extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
             assert.ok(err);
 
             extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, Object.assign({ force: true }, options), (err) => {
-              assert.ok(!err);
+              assert.ok(!err, err ? err.message : '');
 
               validateFiles(options, 'tar', (err) => {
-                assert.ok(!err);
+                assert.ok(!err, err ? err.message : '');
                 done();
               });
             });

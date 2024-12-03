@@ -27,20 +27,6 @@ function _class_call_check(instance, Constructor) {
         throw new TypeError("Cannot call a class as a function");
     }
 }
-function _defineProperties(target, props) {
-    for(var i = 0; i < props.length; i++){
-        var descriptor = props[i];
-        descriptor.enumerable = descriptor.enumerable || false;
-        descriptor.configurable = true;
-        if ("value" in descriptor) descriptor.writable = true;
-        Object.defineProperty(target, descriptor.key, descriptor);
-    }
-}
-function _create_class(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    return Constructor;
-}
 function _get_prototype_of(o) {
     _get_prototype_of = Object.setPrototypeOf ? Object.getPrototypeOf : function getPrototypeOf(o) {
         return o.__proto__ || Object.getPrototypeOf(o);
@@ -116,63 +102,59 @@ var Zip = /*#__PURE__*/ function(Reader) {
         };
         return _this;
     }
-    _create_class(Zip, [
-        {
-            key: "iterator",
-            value: function iterator() {
-                var stream = this;
-                // find the end record and read it
-                stream.locateEndOfCentralDirectoryRecord();
-                var endRecord = stream.readEndOfCentralDirectoryRecord();
-                // seek to the beginning of the central directory
-                stream.seek(endRecord.central_dir_offset);
-                var count = endRecord.central_dir_disk_records;
+    var _proto = Zip.prototype;
+    _proto.iterator = function iterator() {
+        var stream = this;
+        // find the end record and read it
+        stream.locateEndOfCentralDirectoryRecord();
+        var endRecord = stream.readEndOfCentralDirectoryRecord();
+        // seek to the beginning of the central directory
+        stream.seek(endRecord.central_dir_offset);
+        var count = endRecord.central_dir_disk_records;
+        return {
+            next: function() {
+                if (count-- === 0) throw 'stop-iteration';
+                // read the central directory header
+                var centralHeader = stream.readCentralDirectoryFileHeader();
+                // save our new position so we can restore it
+                var saved = stream.position();
+                // seek to the local header and read it
+                stream.seek(centralHeader.local_file_header_offset);
+                var localHeader = stream.readLocalFileHeader();
+                // dont read the content just save the position for later use
+                var start = stream.position();
+                // seek back to the next central directory header
+                stream.seek(saved);
                 return {
-                    next: function() {
-                        if (count-- === 0) throw 'stop-iteration';
-                        // read the central directory header
-                        var centralHeader = stream.readCentralDirectoryFileHeader();
-                        // save our new position so we can restore it
-                        var saved = stream.position();
-                        // seek to the local header and read it
-                        stream.seek(centralHeader.local_file_header_offset);
-                        var localHeader = stream.readLocalFileHeader();
-                        // dont read the content just save the position for later use
-                        var start = stream.position();
-                        // seek back to the next central directory header
-                        stream.seek(saved);
-                        return {
-                            localHeader: localHeader,
-                            stream: stream,
-                            start: start,
-                            centralHeader: centralHeader,
-                            lastModified: function() {
-                                return decodeDateTime(localHeader.last_mod_file_date, localHeader.last_mod_file_time);
-                            },
-                            getStream: function() {
-                                var offset = start;
-                                var remaining = centralHeader.compressed_size;
-                                var res = new _stream.Readable();
-                                res._read = function(size) {
-                                    if (remaining <= 0) return this.push(null); // done
-                                    if (size > remaining) size = remaining; // clamp
-                                    var bookmark = stream.position(); // save
-                                    stream.seek(offset);
-                                    var chunk = stream.read(size);
-                                    remaining -= size;
-                                    offset += size;
-                                    stream.seek(bookmark); // restore
-                                    this.push(chunk);
-                                };
-                                if (centralHeader.compression_method !== 0) res = res.pipe(_zlib.default.createInflateRaw());
-                                return res;
-                            }
+                    localHeader: localHeader,
+                    stream: stream,
+                    start: start,
+                    centralHeader: centralHeader,
+                    lastModified: function() {
+                        return decodeDateTime(localHeader.last_mod_file_date, localHeader.last_mod_file_time);
+                    },
+                    getStream: function() {
+                        var offset = start;
+                        var remaining = centralHeader.compressed_size;
+                        var res = new _stream.Readable();
+                        res._read = function(size) {
+                            if (remaining <= 0) return this.push(null); // done
+                            if (size > remaining) size = remaining; // clamp
+                            var bookmark = stream.position(); // save
+                            stream.seek(offset);
+                            var chunk = stream.read(size);
+                            remaining -= size;
+                            offset += size;
+                            stream.seek(bookmark); // restore
+                            this.push(chunk);
                         };
+                        if (centralHeader.compression_method !== 0) res = res.pipe(_zlib.default.createInflateRaw());
+                        return res;
                     }
                 };
             }
-        }
-    ]);
+        };
+    };
     return Zip;
 }(_zip.Reader);
-/* CJS INTEROP */ if (exports.__esModule && exports.default) { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) exports.default[key] = exports[key]; module.exports = exports.default; }
+/* CJS INTEROP */ if (exports.__esModule && exports.default) { try { Object.defineProperty(exports.default, '__esModule', { value: true }); for (var key in exports) { exports.default[key] = exports[key]; } } catch (_) {}; module.exports = exports.default; }

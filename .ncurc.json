@@ -1,4 +1,4 @@
 {
   "upgrade": true,
-  "reject": ["bops", "readable-stream"]
+  "reject": ["@types/node","bops", "readable-stream"]
 }

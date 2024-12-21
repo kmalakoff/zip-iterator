@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import eos from 'end-of-stream';
-import mkpath from 'mkpath';
+import mkdirp from 'mkdirp-classic';
 
 export default function streamToFile(source, filePath, callback) {
-  mkpath.sync(path.dirname(filePath)); // sync to not pause the stream
+  mkdirp.sync(path.dirname(filePath)); // sync to not pause the stream
   let err = null;
   function cleanup() {
     source.removeListener('error', onError);

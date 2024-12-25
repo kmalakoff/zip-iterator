@@ -1,4 +1,4 @@
-require('../lib/patch.cjs');
+require('../lib/polyfills.cjs');
 const assert = require('assert');
 const rimraf2 = require('rimraf2');
 const mkdirp = require('mkdirp-classic');
@@ -45,8 +45,7 @@ function extract(iterator, dest, options, callback) {
 
 describe('callback', () => {
   beforeEach((callback) => {
-    rimraf2(TMP_DIR, { disableGlob: true }, (err) => {
-      if (err && err.code !== 'EEXIST') return callback(err);
+    rimraf2(TMP_DIR, { disableGlob: true }, () => {
       mkdirp(TMP_DIR, callback);
     });
   });
@@ -159,7 +158,7 @@ describe('callback', () => {
           extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
             assert.ok(err);
 
-            extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, Object.assign({ force: true }, options), (err) => {
+            extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, { force: true, ...options }, (err) => {
               assert.ok(!err, err ? err.message : '');
 
               validateFiles(options, 'tar', (err) => {

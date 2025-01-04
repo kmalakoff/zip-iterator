@@ -1,1 +1,1 @@
-ignores: ["zip-iterator", "depcheck", "@types/*", "@biomejs/*", "lzma-native"]
+ignores: ["zip-iterator", "@types/*", "@biomejs/*", "lzma-native"]

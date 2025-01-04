@@ -20,7 +20,7 @@ export default class ZipFileEntry extends FileEntry {
     const self = this;
     if (typeof callback === 'function') {
       options = options || {};
-      return FileEntry.prototype.create.call(this, dest, options, function createCallback(err) {
+      return FileEntry.prototype.create.call(this, dest, options, (err) => {
         callback(err);
         if (self.lock) {
           self.lock.release();
@@ -30,9 +30,7 @@ export default class ZipFileEntry extends FileEntry {
     }
 
     return new Promise(function createPromise(resolve, reject) {
-      self.create(dest, options, function createCallback(err, done) {
-        err ? reject(err) : resolve(done);
-      });
+      self.create(dest, options, (err, done) => (err ? reject(err) : resolve(done)));
     });
   }
 

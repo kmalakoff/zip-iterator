@@ -23,8 +23,7 @@ var ZipIterator = require('zip-iterator'));
     // create links after directories and files
     for (const entry of links) await entry.create(dest, options);
   } catch (err) {
-    assert.ok(!err, err ? err.message : '');
-  }
+    }
 
   iterator.destroy();
   iterator = null;
@@ -44,8 +43,7 @@ var ZipIterator = require('zip-iterator'));
     // create links after directories and files
     for (const entry of links) await entry.create(dest, options);
   } catch (err) {
-    assert.ok(!err, err ? err.message : '');
-  }
+    }
 
   iterator.destroy();
   iterator = null;
@@ -128,8 +126,7 @@ iterator.forEach(
   },
   { callbacks: true, concurrency: 1 },
   function (err) {
-    assert.ok(!err, err ? err.message : '');
-
+  
     // create links after directories and files
     var queue = new Queue();
     for (var index = 0; index < links.length; index++) {

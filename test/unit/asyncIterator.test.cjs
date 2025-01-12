@@ -52,7 +52,7 @@ describe('asyncIterator', () => {
         await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
         await validateFiles(options, 'zip');
       } catch (err) {
-        assert.ok(!err, err ? err.message : '');
+        if (err) return done(err);
       }
     });
 
@@ -62,7 +62,7 @@ describe('asyncIterator', () => {
         await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
         await validateFiles(options, 'zip');
       } catch (err) {
-        assert.ok(!err, err ? err.message : '');
+        if (err) return done(err);
       }
     });
 
@@ -80,7 +80,7 @@ describe('asyncIterator', () => {
         await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, { force: true, ...options });
         await validateFiles(options, 'tar');
       } catch (err) {
-        assert.ok(!err, err ? err.message : '');
+        if (err) return done(err);
       }
     });
   });

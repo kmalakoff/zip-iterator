@@ -1,4 +1,4 @@
 {
   "upgrade": true,
-  "reject": ["@types/node","bops", "readable-stream"]
+  "reject": ["@types/*", "biomejs/*", "bops", "readable-stream"]
 }

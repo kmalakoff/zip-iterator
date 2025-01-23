@@ -26,9 +26,9 @@ export default class ZipIterator extends BaseIterator {
 
     const queue = new Queue(1);
     let cancelled = false;
-    function setup() {
+    const setup = () => {
       cancelled = true;
-    }
+    };
     this.processing.push(setup);
 
     if (typeof source !== 'string') {
@@ -37,14 +37,14 @@ export default class ZipIterator extends BaseIterator {
     }
 
     // open zip
-    queue.defer((callback) => {
+    queue.defer((cb) => {
       fs.open(this.lock.tempPath || source, 'r', '0666', (err, fd) => {
         if (this.done || cancelled) return; // done
-        if (err) return callback(err);
+        if (err) return cb(err);
         const reader = new Zip(fd);
         this.lock.fd = fd;
         this.iterator = reader.iterator();
-        callback();
+        cb();
       });
     });
 

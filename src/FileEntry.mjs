@@ -1,5 +1,5 @@
 import fs from 'fs';
-import eos from 'end-of-stream';
+import once from 'call-once-fn';
 import { FileEntry } from 'extract-base-iterator';
 import waitForAccess from './lib/waitForAccess.mjs';
 
@@ -38,9 +38,13 @@ export default class ZipFileEntry extends FileEntry {
     if (!this.entry) return callback(new Error('Zip FileEntry missing entry. Check for calling create multiple times'));
 
     const res = this.entry.getStream().pipe(fs.createWriteStream(fullPath));
-    eos(res, (err) => {
-      err ? callback(err) : waitForAccess(fullPath, callback); // gunzip stream returns prematurely occassionally
+    const end = once((err) => {
+      err ? callback(err) : waitForAccess(fullPath, callback); // gunzip stream returns prematurely occasionally
     });
+    res.on('error', end);
+    res.on('end', end);
+    res.on('close', end);
+    res.on('finish', end);
   }
 
   destroy() {

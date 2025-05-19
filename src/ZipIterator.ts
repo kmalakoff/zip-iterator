@@ -7,19 +7,24 @@ import Queue from 'queue-cb';
 import shortHash from 'short-hash';
 import tempSuffix from 'temp-suffix';
 
-import Lock from './lib/Lock.mjs';
+import Lock from './lib/Lock.js';
 import Zip from './lib/Zip.js';
-import fifoRemove from './lib/fifoRemove.mjs';
-import streamToFile from './lib/streamToFile.mjs';
-import nextEntry from './nextEntry.mjs';
+import fifoRemove from './lib/fifoRemove.js';
+import streamToFile from './lib/streamToFile.js';
+import nextEntry from './nextEntry.js';
 
 import os from 'os';
 import osShim from 'os-shim';
 
 const tmpdir = os.tmpdir || osShim.tmpdir;
 
+import type { ExtractOptions, LockT } from './types.js';
+
 export default class ZipIterator extends BaseIterator {
-  constructor(source, options) {
+  private lock: LockT;
+  private iterator: unknown;
+
+  constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
     super(options);
     this.lock = new Lock();
     this.lock.iterator = this;
@@ -38,7 +43,7 @@ export default class ZipIterator extends BaseIterator {
 
     // open zip
     queue.defer((cb) => {
-      fs.open(this.lock.tempPath || source, 'r', '0666', (err, fd) => {
+      fs.open(this.lock.tempPath || (source as string), 'r', '0666', (err, fd) => {
         if (this.done || cancelled) return; // done
         if (err) return cb(err);
         const reader = new Zip(fd);

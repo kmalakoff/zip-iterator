@@ -56,7 +56,7 @@
     "readable-stream": "^2.3.7",
     "rimraf2": "^2.8.2",
     "short-hash": "^1.0.0",
-    "temp-suffix": "^0.1.16",
+    "temp-suffix": "^0.1.17",
     "zip": "^1.2.0"
   },
   "devDependencies": {

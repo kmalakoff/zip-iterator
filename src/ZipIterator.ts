@@ -61,7 +61,7 @@ export default class ZipIterator extends BaseIterator {
     });
   }
 
-  end(err) {
+  end(err?: Error) {
     if (this.lock) {
       this.lock.err = err;
       this.lock.release();

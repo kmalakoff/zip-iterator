@@ -65,60 +65,40 @@ describe('asyncAwait', () => {
   describe('happy path', () => {
     it('extract - no strip - concurrency 1', async () => {
       const options = { now: new Date(), concurrency: 1 };
-      try {
-        await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
-        await validateFiles(options, 'zip');
-      } catch (err) {
-        if (err) return done(err.message);
-      }
+      await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
+      await validateFiles(options, 'zip');
     });
 
     it('extract - no strip - concurrency Infinity', async () => {
       const options = { now: new Date(), concurrency: Infinity };
-      try {
-        await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
-        await validateFiles(options, 'zip');
-      } catch (err) {
-        if (err) return done(err.message);
-      }
+      await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
+      await validateFiles(options, 'zip');
     });
 
     it('extract - no strip - forEach', async () => {
       const options = { now: new Date(), concurrency: Infinity };
-      try {
-        await extractForEach(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
-        await validateFiles(options, 'zip');
-      } catch (err) {
-        if (err) return done(err.message);
-      }
+      await extractForEach(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
+      await validateFiles(options, 'zip');
     });
 
     it('extract - strip 1', async () => {
       const options = { now: new Date(), strip: 1 };
-      try {
-        await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
-        await validateFiles(options, 'zip');
-      } catch (err) {
-        if (err) return done(err.message);
-      }
+      await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
+      await validateFiles(options, 'zip');
     });
 
     it('extract multiple times', async () => {
       const options = { now: new Date(), strip: 1 };
+      await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
+      await validateFiles(options, 'tar');
       try {
         await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
-        await validateFiles(options, 'tar');
-        try {
-          await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options);
-          assert.ok(false);
-        } catch (err) {
-          assert.ok(err);
-        }
-        await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, { force: true, ...options });
-        await validateFiles(options, 'tar');
+        assert.ok(false);
       } catch (err) {
-        if (err) return done(err.message);
+        assert.ok(err);
       }
+      await extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, { force: true, ...options });
+      await validateFiles(options, 'tar');
     });
   });
 

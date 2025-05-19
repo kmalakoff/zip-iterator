@@ -1,6 +1,16 @@
 // From: https://github.com/bower/decompress-zip/blob/master/lib/structures.js
 
-export default function parseExternalFileAttributes(externalAttributes, platform) {
+import type { Mode } from 'fs';
+
+export interface Attributes {
+  platform: string;
+  type: 'file' | 'directory' | 'link' | 'symlink';
+  mode: Mode;
+  mtime?: number;
+  path?: string;
+}
+
+export default function parseExternalFileAttributes(externalAttributes: number, platform: number): Attributes {
   const types = {
     // In theory, any of these could be set. Realistically, though, it will
     // be regular, directory or symlink

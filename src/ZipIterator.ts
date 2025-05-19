@@ -20,7 +20,7 @@ const tmpdir = os.tmpdir || osShim.tmpdir;
 
 import type { ExtractOptions, LockT } from './types.js';
 
-export default class ZipIterator extends BaseIterator {
+export default class ZipIterator extends BaseIterator<unknown> {
   private lock: LockT;
   private iterator: unknown;
 

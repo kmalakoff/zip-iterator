@@ -15,7 +15,6 @@ import nextEntry from './nextEntry.js';
 
 import os from 'os';
 import osShim from 'os-shim';
-
 const tmpdir = os.tmpdir || osShim.tmpdir;
 
 import type { ExtractOptions, LockT } from './types.js';

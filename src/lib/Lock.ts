@@ -1,13 +1,27 @@
 import fs from 'fs';
 import BaseIterator from 'extract-base-iterator';
-import LC from 'lifecycle';
 import rimraf2 from 'rimraf2';
 
-export default LC.RefCountable.extend({
-  constructor: function () {
-    LC.RefCountable.prototype.constructor.call(this);
-  },
-  __destroy: function () {
+export default class Lock {
+  private count = 1;
+
+  // members
+  tempPath: string = null;
+  fd: number = null;
+  iterator: BaseIterator<unknown> = null;
+  err: Error = null;
+
+  retain() {
+    this.count++;
+  }
+
+  release() {
+    if (this.count <= 0) throw new Error('Lock count is corrupted');
+    this.count--;
+    if (this.count === 0) this.__destroy();
+  }
+
+  private __destroy() {
     if (this.tempPath) {
       try {
         rimraf2.sync(this.tempPath, { disableGlob: true });
@@ -26,5 +40,5 @@ export default LC.RefCountable.extend({
       BaseIterator.prototype.end.call(this.iterator, this.err || null);
       this.iterator = null;
     }
-  },
-});
+  }
+}

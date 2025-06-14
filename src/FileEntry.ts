@@ -1,22 +1,21 @@
 import fs from 'fs';
-import { FileEntry } from 'extract-base-iterator';
+import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
 import oo from 'on-one';
-import waitForAccess from './lib/waitForAccess.js';
 
-import type { LockT, ZipFileEntryT } from './types.js';
+import type { ExtractOptions, LockT, ZipFile } from './types.js';
 
 export default class ZipFileEntry extends FileEntry {
   private lock: LockT;
-  private entry: ZipFileEntryT;
+  private entry: ZipFile;
 
-  constructor(attributes, entry: ZipFileEntryT, lock: LockT) {
+  constructor(attributes: FileAttributes, entry: ZipFile, lock: LockT) {
     super(attributes);
     this.entry = entry;
     this.lock = lock;
     this.lock.retain();
   }
 
-  create(dest, options, callback) {
+  create(dest: string, options: ExtractOptions | NoParamCallback, callback: NoParamCallback): undefined | Promise<boolean> {
     if (typeof options === 'function') {
       callback = options;
       options = null;
@@ -34,15 +33,18 @@ export default class ZipFileEntry extends FileEntry {
     }
 
     return new Promise((resolve, reject) => {
-      this.create(dest, options, (err, done) => (err ? reject(err) : resolve(done)));
+      this.create(dest, options, (err?: Error, done?: boolean) => (err ? reject(err) : resolve(done)));
     });
   }
 
-  _writeFile(fullPath, _, callback) {
-    if (!this.entry) return callback(new Error('Zip FileEntry missing entry. Check for calling create multiple times'));
+  _writeFile(fullPath: string, _options: ExtractOptions, callback: NoParamCallback): undefined {
+    if (!this.entry) {
+      callback(new Error('Zip FileEntry missing entry. Check for calling create multiple times'));
+      return;
+    }
 
     const res = this.entry.getStream().pipe(fs.createWriteStream(fullPath));
-    oo(res, ['error', 'end', 'close', 'finish'], (err) => {
+    oo(res, ['error', 'end', 'close', 'finish'], (err?: Error) => {
       err ? callback(err) : waitForAccess(fullPath, callback); // gunzip stream returns prematurely occasionally
     });
   }

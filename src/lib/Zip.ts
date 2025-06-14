@@ -7,15 +7,17 @@ import zlib from 'zlib';
 const decodeDateTime = (date, time) => new Date((date >>> 9) + 1980, ((date >>> 5) & 15) - 1, date & 31, (time >>> 11) & 31, (time >>> 5) & 63, (time & 63) * 2);
 
 interface Source {
-  read(start, length): Buffer;
+  read(start: number, length: number): Buffer;
 }
 
 interface ReaderT {
   _source: Source;
 }
 
+import type { AbstractZipFileIterator } from '../types.js';
+
 export default class Zip extends Reader {
-  constructor(fd) {
+  constructor(fd: number) {
     super(fd);
 
     // patch pos
@@ -33,7 +35,7 @@ export default class Zip extends Reader {
     };
   }
 
-  iterator() {
+  iterator(): AbstractZipFileIterator {
     const stream = this as Reader;
 
     // find the end record and read it

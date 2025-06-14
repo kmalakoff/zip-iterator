@@ -1,1 +1,1 @@
-ignores: ["zip-iterator", "lzma-native"]
+ignores: ["zip-iterator", "lzma-native", "readable-stream"]

@@ -1,6 +1,4 @@
-import ZipIterator from './ZipIterator.js';
-export default ZipIterator;
-export { default as FileEntry } from './FileEntry.js';
-export { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
+import './polyfills.js';
+export { default } from './ZipIterator.js';
 export { default as Zip } from './lib/Zip.js';
 export * from './types.js';

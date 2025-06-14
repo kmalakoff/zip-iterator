@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import './polyfills.cjs';
 
 import BaseIterator from 'extract-base-iterator';
 import Queue from 'queue-cb';
@@ -9,7 +8,6 @@ import tempSuffix from 'temp-suffix';
 
 import Lock from './lib/Lock.js';
 import Zip from './lib/Zip.js';
-import fifoRemove from './lib/fifoRemove.js';
 import streamToFile from './lib/streamToFile.js';
 import nextEntry from './nextEntry.js';
 
@@ -17,11 +15,11 @@ import os from 'os';
 import osShim from 'os-shim';
 const tmpdir = os.tmpdir || osShim.tmpdir;
 
-import type { ExtractOptions, LockT } from './types.js';
+import type { AbstractZipFileIterator, ExtractOptions, LockT } from './types.js';
 
 export default class ZipIterator extends BaseIterator<unknown> {
   private lock: LockT;
-  private iterator: unknown;
+  private iterator: AbstractZipFileIterator;
 
   constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
     super(options);
@@ -54,7 +52,7 @@ export default class ZipIterator extends BaseIterator<unknown> {
 
     // start processing
     queue.await((err) => {
-      fifoRemove(this.processing, setup);
+      this.processing.removeValue(setup);
       if (this.done || cancelled) return; // done
       err ? this.end(err) : this.push(nextEntry);
     });

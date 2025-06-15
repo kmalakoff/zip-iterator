@@ -52,7 +52,7 @@ export default class ZipIterator extends BaseIterator<unknown> {
 
     // start processing
     queue.await((err) => {
-      this.processing.removeValue(setup);
+      this.processing.remove(setup);
       if (this.done || cancelled) return; // done
       err ? this.end(err) : this.push(nextEntry);
     });

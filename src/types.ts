@@ -25,10 +25,3 @@ export interface AbstractZipIterator extends AbstractIterator<unknown> {
 }
 
 export type EntryCallback = (error?: Error, entry?: Entry) => undefined;
-
-// localHeader: localHeader,
-// stream: stream,
-// start: start,
-// centralHeader: centralHeader,
-// lastModified: () => decodeDateTime(localHeader.last_mod_file_date, localHeader.last_mod_file_time),
-// getStream: () => {

@@ -28,7 +28,7 @@ export default class ZipIterator extends BaseIterator<unknown> {
 
     const queue = new Queue(1);
     let cancelled = false;
-    const setup = () => {
+    const setup = (): undefined => {
       cancelled = true;
     };
     this.processing.push(setup);

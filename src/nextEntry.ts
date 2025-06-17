@@ -9,6 +9,8 @@ import streamToString from './lib/streamToString.js';
 import { type DirectoryAttributes, DirectoryEntry, type FileAttributes, type LinkAttributes, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
 import type { AbstractZipIterator, Entry, EntryCallback } from './types.js';
 
+export type NextCallback = (error?: Error, entry?: Entry) => undefined;
+
 export default function nextEntry<_T>(iterator: AbstractZipIterator, callback: EntryCallback): undefined {
   if (!iterator.iterator) {
     callback(new Error('iterator missing'));
@@ -29,8 +31,8 @@ export default function nextEntry<_T>(iterator: AbstractZipIterator, callback: E
   const nextCallback = once((err?: Error, entry?: Entry) => {
     // keep processing
     if (entry) iterator.stack.push(nextEntry);
-    err ? callback(err) : callback(null, entry);
-  }) as EntryCallback;
+    err ? callback(err) : callback(null, entry ? { done: false, value: entry } : { done: true, value: null });
+  }) as NextCallback;
 
   // done: use null to indicate iteration is complete
   if (iterator.done || !entry) return callback(null, null);

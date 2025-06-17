@@ -24,4 +24,4 @@ export interface AbstractZipIterator extends AbstractIterator<unknown> {
   iterator: AbstractZipFileIterator;
 }
 
-export type EntryCallback = (error?: Error, entry?: Entry) => undefined;
+export type EntryCallback = (error?: Error, result?: IteratorResult<Entry>) => undefined;

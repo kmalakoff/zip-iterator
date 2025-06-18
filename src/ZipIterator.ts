@@ -16,8 +16,8 @@ const tmpdir = os.tmpdir || osShim.tmpdir;
 import type { AbstractZipFileIterator, ExtractOptions, LockT } from './types.js';
 
 export default class ZipIterator extends BaseIterator<unknown> {
-  private lock: LockT;
-  private iterator: AbstractZipFileIterator;
+  lock: LockT;
+  iterator: AbstractZipFileIterator;
 
   constructor(source: string | NodeJS.ReadableStream, options: ExtractOptions = {}) {
     super(options);

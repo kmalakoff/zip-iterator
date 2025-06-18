@@ -1,5 +1,5 @@
+export { type AbstractIterator, DirectoryEntry, type Entry, type ExtractOptions, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
 export { default as FileEntry } from './FileEntry.js';
-export { type Entry, type AbstractIterator, DirectoryEntry, LinkEntry, SymbolicLinkEntry, type ExtractOptions } from 'extract-base-iterator';
 
 export interface LockT {
   iterator?: unknown;

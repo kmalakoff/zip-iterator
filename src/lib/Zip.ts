@@ -1,7 +1,6 @@
-import { Reader } from 'zip';
-
 import fs from 'fs';
 import { Readable } from 'stream';
+import { Reader } from 'zip';
 import zlib from 'zlib';
 
 const decodeDateTime = (date, time) => new Date((date >>> 9) + 1980, ((date >>> 5) & 15) - 1, date & 31, (time >>> 11) & 31, (time >>> 5) & 63, (time & 63) * 2);

@@ -5,11 +5,12 @@ import path from 'path';
 import FileEntry from './FileEntry.js';
 import parseExternalFileAttributes from './lib/parseExternalFileAttributes.js';
 import streamToString from './lib/streamToString.js';
-import type { AbstractZipIterator, Entry, EntryCallback } from './types.js';
+import type { Entry, EntryCallback } from './types.js';
+import type ZipIterator from './ZipIterator.js';
 
 export type NextCallback = (error?: Error, entry?: Entry) => undefined;
 
-export default function nextEntry<_T>(iterator: AbstractZipIterator, callback: EntryCallback): undefined {
+export default function nextEntry<_T>(iterator: ZipIterator, callback: EntryCallback): undefined {
   if (!iterator.iterator) {
     callback(new Error('iterator missing'));
     return;
@@ -28,12 +29,12 @@ export default function nextEntry<_T>(iterator: AbstractZipIterator, callback: E
 
   const nextCallback = once((err?: Error, entry?: Entry) => {
     // keep processing
-    if (entry) iterator.stack.push(nextEntry);
+    if (entry) iterator.push(nextEntry);
     err ? callback(err) : callback(null, entry ? { done: false, value: entry } : { done: true, value: null });
   }) as NextCallback;
 
   // done: use null to indicate iteration is complete
-  if (iterator.done || !entry) return callback(null, null);
+  if (iterator.isDone() || !entry) return callback(null, null);
 
   const localHeader = entry.localHeader;
   const centralHeader = entry.centralHeader;

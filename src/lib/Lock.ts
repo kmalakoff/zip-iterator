@@ -1,5 +1,5 @@
-import fs from 'fs';
 import BaseIterator from 'extract-base-iterator';
+import fs from 'fs';
 import rimraf2 from 'rimraf2';
 
 export default class Lock {

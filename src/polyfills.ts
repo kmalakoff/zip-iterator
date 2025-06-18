@@ -1,7 +1,7 @@
 import 'buffer-v6-polyfill';
-import stream from 'stream';
 
 import Module from 'module';
+import stream from 'stream';
 
 const _require = typeof require === 'undefined' ? Module.createRequire(import.meta.url) : require;
 

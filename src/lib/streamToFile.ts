@@ -1,8 +1,8 @@
-import fs from 'fs';
-import path from 'path';
 import once from 'call-once-fn';
+import fs from 'fs';
 import mkdirp from 'mkdirp-classic';
 import oo from 'on-one';
+import path from 'path';
 
 export type Callback = (error?: Error) => undefined;
 

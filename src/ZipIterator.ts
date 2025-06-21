@@ -6,14 +6,14 @@ import path from 'path';
 import Queue from 'queue-cb';
 import shortHash from 'short-hash';
 import tempSuffix from 'temp-suffix';
-import Lock from './lib/Lock.js';
-import streamToFile from './lib/streamToFile.js';
-import Zip from './lib/Zip.js';
-import nextEntry from './nextEntry.js';
+import Lock from './lib/Lock.ts';
+import streamToFile from './lib/streamToFile.ts';
+import Zip from './lib/Zip.ts';
+import nextEntry from './nextEntry.ts';
 
 const tmpdir = os.tmpdir || osShim.tmpdir;
 
-import type { AbstractZipFileIterator, ExtractOptions, LockT } from './types.js';
+import type { AbstractZipFileIterator, ExtractOptions, LockT } from './types.ts';
 
 export default class ZipIterator extends BaseIterator<unknown> {
   lock: LockT;

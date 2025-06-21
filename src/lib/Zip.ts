@@ -13,7 +13,7 @@ interface ReaderT {
   _source: Source;
 }
 
-import type { AbstractZipFileIterator } from '../types.js';
+import type { AbstractZipFileIterator } from '../types.ts';
 
 export default class Zip extends Reader {
   constructor(fd: number) {

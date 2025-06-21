@@ -1,5 +1,5 @@
-import './polyfills.js';
+import './polyfills.ts';
 
-export { default as Zip } from './lib/Zip.js';
-export * from './types.js';
-export { default } from './ZipIterator.js';
+export { default as Zip } from './lib/Zip.ts';
+export * from './types.ts';
+export { default } from './ZipIterator.ts';

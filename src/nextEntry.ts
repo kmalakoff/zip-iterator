@@ -2,11 +2,11 @@ import once from 'call-once-fn';
 import { type DirectoryAttributes, DirectoryEntry, type FileAttributes, type LinkAttributes, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
 import compact from 'lodash.compact';
 import path from 'path';
-import FileEntry from './FileEntry.js';
-import parseExternalFileAttributes from './lib/parseExternalFileAttributes.js';
-import streamToString from './lib/streamToString.js';
-import type { Entry, EntryCallback } from './types.js';
-import type ZipIterator from './ZipIterator.js';
+import FileEntry from './FileEntry.ts';
+import parseExternalFileAttributes from './lib/parseExternalFileAttributes.ts';
+import streamToString from './lib/streamToString.ts';
+import type { Entry, EntryCallback } from './types.ts';
+import type ZipIterator from './ZipIterator.ts';
 
 export type NextCallback = (error?: Error, entry?: Entry) => undefined;
 

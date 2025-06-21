@@ -2,7 +2,7 @@ import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } f
 import fs from 'fs';
 import oo from 'on-one';
 
-import type { ExtractOptions, LockT, ZipFile } from './types.js';
+import type { ExtractOptions, LockT, ZipFile } from './types.ts';
 
 export default class ZipFileEntry extends FileEntry {
   private lock: LockT;

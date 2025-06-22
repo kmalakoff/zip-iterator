@@ -1,61 +1,45 @@
-require('../lib/polyfills.cjs');
-const assert = require('assert');
-const rimraf2 = require('rimraf2');
-const mkdirp = require('mkdirp-classic');
-const path = require('path');
-const fs = require('fs');
-const Queue = require('queue-cb');
-const bz2 = require('unbzip2-stream');
-const zlib = require('zlib');
-const Pinkie = require('pinkie-promise');
-
-const ZipIterator = require('zip-iterator');
-const validateFiles = require('../lib/validateFiles.cjs');
-
-const constants = require('../lib/constants.cjs');
-const TMP_DIR = constants.TMP_DIR;
-const TARGET = constants.TARGET;
-const DATA_DIR = constants.DATA_DIR;
+import '../lib/polyfills.ts';
+import assert from 'assert';
+import fs from 'fs';
+import mkdirp from 'mkdirp-classic';
+import path from 'path';
+import Queue from 'queue-cb';
+import rimraf2 from 'rimraf2';
+import bz2 from 'unbzip2-stream';
+// @ts-ignore
+import ZipIterator from 'zip-iterator';
+import zlib from 'zlib';
+import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
+import validateFiles from '../lib/validateFiles.ts';
 
 function extract(iterator, dest, options, callback) {
   const links = [];
-  iterator
-    .forEach(
-      (entry) => {
-        if (entry.type === 'link') links.unshift(entry);
-        else if (entry.type === 'symlink') links.push(entry);
-        else return entry.create(dest, options);
-      },
-      { concurrency: options.concurrency }
-    )
-    .then(() => {
+  iterator.forEach(
+    (entry, callback) => {
+      if (entry.type === 'link') {
+        links.unshift(entry);
+        callback();
+      } else if (entry.type === 'symlink') {
+        links.push(entry);
+        callback();
+      } else entry.create(dest, options, callback);
+    },
+    { callbacks: true, concurrency: options.concurrency },
+    (err) => {
+      if (err) return callback(err);
+
       // create links after directories and files
       const queue = new Queue(1);
       for (let index = 0; index < links.length; index++) {
-        ((entry) => {
-          queue.defer((callback) => {
-            entry.create(dest, options).then(callback).catch(callback);
-          });
-        })(links[index]);
+        const entry = links[index];
+        queue.defer(entry.create.bind(entry, dest, options));
       }
       queue.await(callback);
-    })
-    .catch(callback);
+    }
+  );
 }
 
-describe('promise', () => {
-  (() => {
-    // patch and restore promise
-    if (typeof global === 'undefined') return;
-    const globalPromise = global.Promise;
-    before(() => {
-      global.Promise = Pinkie;
-    });
-    after(() => {
-      global.Promise = globalPromise;
-    });
-  })();
-
+describe('callback', () => {
   beforeEach((callback) => {
     rimraf2(TMP_DIR, { disableGlob: true }, () => {
       mkdirp(TMP_DIR, callback);
@@ -162,9 +146,9 @@ describe('promise', () => {
 
     it('extract - stream gz', (done) => {
       const options = { now: new Date() };
-      let source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip.gz'));
-      source = source.pipe(zlib.createUnzip());
-      extract(new ZipIterator(source), TARGET, options, (err) => {
+      const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip.gz'));
+      const pipeline = source.pipe(zlib.createUnzip());
+      extract(new ZipIterator(pipeline), TARGET, options, (err) => {
         if (err) {
           done(err.message);
           return;
@@ -235,8 +219,7 @@ describe('promise', () => {
     });
   });
 
-  // TODO: investigate the throwing and promise race condition in node 0.8
-  describe.skip('unhappy path', () => {
+  describe('unhappy path', () => {
     it('should fail with bad path', (done) => {
       const options = { now: new Date(), strip: 2 };
       extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip' + 'does-not-exist')), TARGET, options, (err) => {

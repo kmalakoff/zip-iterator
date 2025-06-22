@@ -8,7 +8,7 @@ export default class Lock {
   // members
   tempPath: string = null;
   fd: number = null;
-  iterator: BaseIterator<unknown> = null;
+  iterator: BaseIterator = null;
   err: Error = null;
 
   retain() {

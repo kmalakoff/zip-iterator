@@ -15,7 +15,7 @@ const tmpdir = os.tmpdir || osShim.tmpdir;
 
 import type { AbstractZipFileIterator, ExtractOptions, LockT } from './types.ts';
 
-export default class ZipIterator extends BaseIterator<unknown> {
+export default class ZipIterator extends BaseIterator {
   lock: LockT;
   iterator: AbstractZipFileIterator;
 

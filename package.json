@@ -44,7 +44,6 @@
     "version": "tsds version"
   },
   "dependencies": {
-    "buffer-v6-polyfill": "^1.0.5",
     "call-once-fn": "^1.0.20",
     "extract-base-iterator": "^2.0.5",
     "lodash.compact": "^3.0.1",
@@ -54,6 +53,7 @@
     "queue-cb": "^1.5.5",
     "readable-stream": "^2.3.7",
     "rimraf2": "^2.8.2",
+    "safe-buffer": "^5.2.1",
     "short-hash": "^1.0.0",
     "temp-suffix": "^0.1.20",
     "zip": "^1.2.0"

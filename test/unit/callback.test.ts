@@ -56,7 +56,7 @@ describe('callback', () => {
     it('destroy entries', (done) => {
       const iterator = new ZipIterator(path.join(DATA_DIR, 'fixture.zip'));
       iterator.forEach(
-        (entry) => {
+        (entry): undefined => {
           entry.destroy();
         },
         (err) => {

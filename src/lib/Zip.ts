@@ -1,7 +1,12 @@
 import fs from 'fs';
-import { Readable } from 'stream';
+import StreamCompat from 'readable-stream';
+import { Buffer } from 'safe-buffer';
+import Stream from 'stream';
 import { Reader } from 'zip';
 import zlib from 'zlib';
+
+const major = +process.versions.node.split('.')[0];
+const Readable = major > 0 ? Stream.Readable : (StreamCompat.Readable as typeof Stream.Readable);
 
 const decodeDateTime = (date, time) => new Date((date >>> 9) + 1980, ((date >>> 5) & 15) - 1, date & 31, (time >>> 11) & 31, (time >>> 5) & 63, (time & 63) * 2);
 
@@ -25,7 +30,7 @@ export default class Zip extends Reader {
       let pos = 0;
       while (length > 0) {
         const toRead = Math.min(length, 8192);
-        fs.readSync(fd, result, pos, toRead, start);
+        fs.readSync(fd, result as unknown as NodeJS.ArrayBufferView, pos, toRead, start);
         length -= toRead;
         start += toRead;
         pos += toRead;

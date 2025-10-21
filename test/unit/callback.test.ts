@@ -6,7 +6,6 @@ import path from 'path';
 import Queue from 'queue-cb';
 import rimraf2 from 'rimraf2';
 import bz2 from 'unbzip2-stream';
-// @ts-ignore
 import ZipIterator from 'zip-iterator';
 import zlib from 'zlib';
 import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';

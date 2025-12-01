@@ -28,6 +28,16 @@ export default class ZipIterator extends BaseIterator {
     this.sourceStream = null;
     this.streamingMode = options.streaming === true;
 
+    // Keep a setup function in processing to prevent BaseIterator from calling end()
+    // prematurely when stack becomes empty between entry events.
+    // This is removed in end() when the iterator actually completes.
+    let cancelled = false;
+    const setup = (): undefined => {
+      cancelled = true;
+    };
+    this.processing.push(setup);
+    this.lock.setup = setup;
+
     // Create the forward-only parser
     this.extract = new ZipExtract();
 
@@ -35,7 +45,7 @@ export default class ZipIterator extends BaseIterator {
       // For file inputs, read Central Directory first for better type detection
       readCentralDirectory(source, (err, map) => {
         // Check if iterator was destroyed while we were reading CD
-        if (this.done) return;
+        if (this.done || cancelled) return;
 
         if (!err && map) {
           this.centralDir = map;
@@ -55,6 +65,7 @@ export default class ZipIterator extends BaseIterator {
   private bufferStreamAndStart(source: NodeJS.ReadableStream): void {
     // Generate temp file path
     this.tempPath = path.join(tmpdir(), `zip-iterator-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`);
+    this.lock.tempPath = this.tempPath;
 
     const writeStream = fs.createWriteStream(this.tempPath);
     const tempPath = this.tempPath;
@@ -63,33 +74,22 @@ export default class ZipIterator extends BaseIterator {
     source.on('error', (err: Error) => {
       const ws = writeStream as NodeJS.WritableStream & { destroy?: () => void };
       if (typeof ws.destroy === 'function') ws.destroy();
-      this.cleanupTemp();
       this.end(err);
     });
 
     // Handle write completion using on-one for Node 0.8 compatibility
     oo(writeStream, ['error', 'finish', 'close'], (err?: Error) => {
       if (err) {
-        this.cleanupTemp();
         this.end(err);
         return;
       }
 
-      if (this.done) {
-        this.cleanupTemp();
-        return;
-      }
+      if (this.done) return;
 
       // Read Central Directory from temp file
       readCentralDirectory(tempPath, (cdErr, map) => {
-        if (this.done) {
-          this.cleanupTemp();
-          return;
-        }
-
-        if (!cdErr && map) {
-          this.centralDir = map;
-        }
+        if (this.done) return;
+        if (!cdErr && map) this.centralDir = map;
 
         // Start streaming from temp file
         this.startStreaming(fs.createReadStream(tempPath));
@@ -99,19 +99,13 @@ export default class ZipIterator extends BaseIterator {
     source.pipe(writeStream);
   }
 
-  private cleanupTemp(): void {
-    if (this.tempPath) {
-      const tempPath = this.tempPath;
-      this.tempPath = null;
-      fs.unlink(tempPath, () => {
-        // Ignore errors - temp cleanup is best-effort
-      });
-    }
-  }
-
   private startStreaming(stream: NodeJS.ReadableStream): void {
     // Store reference to destroy on end
     this.sourceStream = stream;
+
+    // Store resources on lock for cleanup
+    this.lock.sourceStream = stream;
+    this.lock.extract = this.extract;
 
     // IMPORTANT: Set up parser event handlers FIRST, before data flows
     // In Node 0.8, streams are "flowing" immediately when you attach a 'data' handler
@@ -129,6 +123,12 @@ export default class ZipIterator extends BaseIterator {
       // Push a function that calls createEntry synchronously with the streams
       // Note: createEntry must be called synchronously to receive stream data events
       this.push((_iterator, callback) => {
+        // Guard: skip if iterator already ended
+        if (!this.lock) {
+          next();
+          callback();
+          return;
+        }
         // Call createEntry - it will attach listeners to stream which is still active
         createEntry(header, entryStream, this.lock, next, callback, cdEntry);
       });
@@ -166,33 +166,21 @@ export default class ZipIterator extends BaseIterator {
   }
 
   end(err?: Error) {
-    if (this.lock) {
-      this.lock.err = err;
-      this.lock.release();
-      this.lock = null;
-    } else {
-      BaseIterator.prototype.end.call(this, err);
-      // Only cleanup when actually ending (not when releasing lock)
-      this.cleanup();
-    }
-  }
-
-  private cleanup(): void {
-    // Signal end to extract if it hasn't been signaled yet
-    if (this.extract) {
-      this.extract.end();
-      this.extract = null;
-    }
-    this.centralDir = null;
-    this.cleanupTemp();
-
-    // Destroy source stream to release file handles (important for Node 0.8)
-    if (this.sourceStream) {
-      const stream = this.sourceStream as NodeJS.ReadableStream & { destroy?: () => void };
-      if (typeof stream.destroy === 'function') {
-        stream.destroy();
+    const lock = this.lock;
+    if (lock) {
+      this.lock = null; // Clear FIRST to prevent re-entrancy
+      // Remove setup from processing before release
+      if (lock.setup) {
+        this.processing.remove(lock.setup);
+        lock.setup = null;
       }
-      this.sourceStream = null;
+      lock.err = err;
+      lock.release(); // Lock.__destroy() handles all cleanup
     }
+    // Clear local refs (always runs, safe/idempotent)
+    this.extract = null;
+    this.centralDir = null;
+    this.sourceStream = null;
+    this.tempPath = null;
   }
 }

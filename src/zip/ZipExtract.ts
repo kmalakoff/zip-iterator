@@ -121,17 +121,12 @@ export default class ZipExtract extends EventEmitter {
     // This handles the case where consumer called next() early but stream data is incomplete
     if (this.currentStream && this.state === State.FILE_DATA) {
       const err = C.createZipError(this.bytesRemaining > 0 ? `Truncated archive: expected ${this.bytesRemaining} more bytes of file data` : 'Truncated archive: unexpected end of file data', C.ZipErrorCode.TRUNCATED_ARCHIVE);
-      // End the stream and emit error
-      const stream = this.currentStream as NodeJS.WritableStream & { end?: () => void };
+      const stream = this.currentStream;
       this.currentStream = null;
-      // End the stream (PassThrough is a writable, so end() signals EOF to readers)
-      if (typeof stream.end === 'function') {
-        stream.end();
-      }
-      // Emit error to stream if it has listeners
-      if ((stream as NodeJS.EventEmitter).listeners && (stream as NodeJS.EventEmitter).listeners('error').length > 0) {
-        stream.emit('error', err);
-      }
+      // Emit error to stream - use deferred emission if no listeners yet
+      // This handles the race condition where end() is called before consumer attaches listeners
+      // NOTE: We do NOT call stream.end() here - the error should prevent normal completion
+      this.emitErrorToStream(stream as NodeJS.EventEmitter, err);
       // Emit to ZipExtract for iterator-level error handling
       this.emitError(err);
       if (callback) callback();
@@ -691,6 +686,48 @@ export default class ZipExtract extends EventEmitter {
   private unlock(): void {
     this.locked = false;
     this.process();
+  }
+
+  /**
+   * Emit error to a stream, deferring if no listeners are attached yet.
+   * This handles the race condition where the stream ends before the consumer
+   * has a chance to attach error listeners (e.g., small truncated files).
+   */
+  private emitErrorToStream(stream: NodeJS.EventEmitter, err: Error): void {
+    // Check if there are already error listeners
+    const hasListeners = stream.listeners && stream.listeners('error').length > 0;
+
+    if (hasListeners) {
+      // Emit immediately if listeners exist
+      stream.emit('error', err);
+    } else {
+      // Defer emission: patch on/addListener to emit when listener is attached
+      // Store error on stream object for deferred emission
+      const streamWithError = stream as NodeJS.EventEmitter & { _deferredError?: Error };
+      streamWithError._deferredError = err;
+
+      // Wrap the on/addListener methods to check for deferred error
+      const origOn = stream.on;
+      const _origAddListener = stream.addListener;
+
+      const patchedOn = function (this: NodeJS.EventEmitter & { _deferredError?: Error }, event: string, listener: (...args: unknown[]) => void): NodeJS.EventEmitter {
+        const result = origOn.call(this, event, listener);
+        // If attaching error listener and we have a deferred error, emit it
+        if (event === 'error' && this._deferredError) {
+          const deferredErr = this._deferredError;
+          this._deferredError = undefined;
+          // Emit asynchronously to ensure listener is fully attached
+          // Use setTimeout for Node 0.8 compatibility (setImmediate not available)
+          setTimeout(() => {
+            this.emit('error', deferredErr);
+          }, 0);
+        }
+        return result;
+      };
+
+      stream.on = patchedOn as typeof stream.on;
+      stream.addListener = patchedOn as typeof stream.addListener;
+    }
   }
 
   /**

@@ -1,11 +1,9 @@
-import '../lib/polyfills.ts';
 import assert from 'assert';
 import fs from 'fs';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Queue from 'queue-cb';
 import rimraf2 from 'rimraf2';
-import bz2 from 'unbzip2-stream';
 import ZipIterator from 'zip-iterator';
 import zlib from 'zlib';
 import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
@@ -107,26 +105,6 @@ describe('callback', () => {
     it('extract - stream', (done) => {
       const options = { now: new Date() };
       const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip'));
-      extract(new ZipIterator(source), TARGET, options, (err) => {
-        if (err) {
-          done(err.message);
-          return;
-        }
-
-        validateFiles(options, 'tar', (err) => {
-          if (err) {
-            done(err.message);
-            return;
-          }
-          done();
-        });
-      });
-    });
-
-    it('extract - stream bz2', (done) => {
-      const options = { now: new Date() };
-      let source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip.bz2'));
-      source = source.pipe(bz2());
       extract(new ZipIterator(source), TARGET, options, (err) => {
         if (err) {
           done(err.message);

@@ -61,8 +61,7 @@
     "mkdirp-classic": "*",
     "pinkie-promise": "*",
     "queue-cb": "*",
-    "rimraf2": "*",
-    "unbzip2-stream": "*"
+    "rimraf2": "*"
   },
   "engines": {
     "node": ">=0.8"

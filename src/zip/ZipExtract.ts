@@ -13,7 +13,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { crc32 } from 'extract-base-iterator';
+import { bufferFrom, crc32 } from 'extract-base-iterator';
 import pako from 'pako';
 import Stream from 'stream';
 import BufferList from './BufferList.ts';
@@ -416,7 +416,7 @@ export default class ZipExtract extends EventEmitter {
       try {
         // Use pako for synchronous decompression (works on all Node versions)
         const decompressed = pako.inflateRaw(compressedData);
-        const decompressedBuf = Buffer.from(decompressed);
+        const decompressedBuf = bufferFrom(decompressed);
 
         // Verify CRC if enabled
         if (this.options.verifyCrc !== false) {
@@ -519,7 +519,7 @@ export default class ZipExtract extends EventEmitter {
     // Decompress using pako and emit to consumer
     try {
       const decompressed = pako.inflateRaw(compressedData);
-      this.finishDeflateEntry(Buffer.from(decompressed));
+      this.finishDeflateEntry(bufferFrom(decompressed));
     } catch (err) {
       this.emitError(err as Error);
       return false;

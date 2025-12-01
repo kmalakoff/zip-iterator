@@ -231,8 +231,7 @@ describe('promise', () => {
     });
   });
 
-  // TODO: investigate the throwing and promise race condition in node 0.8
-  describe.skip('unhappy path', () => {
+  describe('unhappy path', () => {
     it('should fail with bad path', (done) => {
       const options = { now: new Date(), strip: 2 };
       extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip' + 'does-not-exist')), TARGET, options, (err) => {

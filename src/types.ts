@@ -10,6 +10,11 @@ export { default as FileEntry } from './FileEntry.ts';
 export interface LockT {
   iterator?: unknown;
   err?: Error;
+  // cleanup resources
+  tempPath?: string;
+  extract?: unknown;
+  sourceStream?: NodeJS.ReadableStream;
+  setup: (() => undefined) | null;
   retain: () => void;
   release: () => void;
 }

@@ -5,6 +5,7 @@
  * buffered data (using readable stream semantics).
  */
 
+import { bufferFrom } from 'extract-base-iterator';
 import oo from 'on-one';
 
 export type Callback = (error?: Error, result?: string) => undefined;
@@ -15,7 +16,7 @@ export default function streamToString(stream: NodeJS.ReadableStream, callback: 
   // Handle data from the stream
   stream.on('data', (chunk: Buffer | string) => {
     if (typeof chunk === 'string') {
-      chunks.push(Buffer.from(chunk, 'utf8'));
+      chunks.push(bufferFrom(chunk, 'utf8'));
     } else {
       chunks.push(chunk);
     }

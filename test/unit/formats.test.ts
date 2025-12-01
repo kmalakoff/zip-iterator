@@ -1,4 +1,3 @@
-import '../lib/polyfills.ts';
 import assert from 'assert';
 import cr from 'cr';
 import fs from 'fs';

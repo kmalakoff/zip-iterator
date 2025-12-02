@@ -13,7 +13,8 @@
  */
 
 import { EventEmitter } from 'events';
-import { BufferList, crc32, inflateRaw } from 'extract-base-iterator';
+import { BufferList, crc32, createInflateRawStream, inflateRaw } from 'extract-base-iterator';
+import oo from 'on-one';
 import Stream from 'stream';
 import * as C from './constants.ts';
 import { type LocalFileHeader, parseDataDescriptor, parseLocalFileHeader } from './headers.ts';
@@ -66,8 +67,11 @@ export default class ZipExtract extends EventEmitter {
   private bytesRemaining: number;
   private locked: boolean;
   private ended: boolean;
-  // For DEFLATE: buffer compressed data until we have it all
+  // For DEFLATE: streaming decompressor (memory efficient) or buffered chunks (for data descriptor)
+  private inflateStream: NodeJS.ReadWriteStream | null;
   private compressedChunks: Buffer[] | null;
+  // Flag to track when waiting for async inflate completion
+  private waitingForInflate: boolean;
   // Running CRC for verification
   private runningCrc: number;
   // Expected CRC from header or data descriptor
@@ -83,7 +87,9 @@ export default class ZipExtract extends EventEmitter {
     this.bytesRemaining = 0;
     this.locked = false;
     this.ended = false;
+    this.inflateStream = null;
     this.compressedChunks = null;
+    this.waitingForInflate = false;
     this.runningCrc = 0;
     this.expectedCrc = 0;
   }
@@ -117,7 +123,8 @@ export default class ZipExtract extends EventEmitter {
 
     // If we have an active stream and we're in FILE_DATA state, the archive is truncated
     // This handles the case where consumer called next() early but stream data is incomplete
-    if (this.currentStream && this.state === State.FILE_DATA) {
+    // Exception: if we're waiting for async inflate completion, that's not truncation
+    if (this.currentStream && this.state === State.FILE_DATA && !this.waitingForInflate) {
       const err = C.createZipError(this.bytesRemaining > 0 ? `Truncated archive: expected ${this.bytesRemaining} more bytes of file data` : 'Truncated archive: unexpected end of file data', C.ZipErrorCode.TRUNCATED_ARCHIVE);
       const stream = this.currentStream;
       this.currentStream = null;
@@ -327,9 +334,30 @@ export default class ZipExtract extends EventEmitter {
     this.runningCrc = 0;
     this.expectedCrc = header.crc32;
 
-    // For DEFLATE, we'll buffer compressed data and decompress later
+    // For DEFLATE with known size, use streaming decompression (memory efficient)
+    // For DEFLATE with data descriptor, we need to buffer for boundary scanning
     if (header.compressionMethod === C.METHOD_DEFLATE) {
-      this.compressedChunks = [];
+      if (header.hasDataDescriptor) {
+        // Data descriptor: need to buffer and scan for boundaries
+        this.compressedChunks = [];
+        this.inflateStream = null;
+      } else {
+        // Known size: use streaming decompression to avoid OOM on large files
+        const inflate = createInflateRawStream();
+        this.inflateStream = inflate;
+        this.compressedChunks = null;
+        inflate.on('data', (chunk: Buffer) => {
+          if (this.options.verifyCrc !== false) {
+            this.runningCrc = crc32(chunk, this.runningCrc);
+          }
+          entryStream.write(chunk);
+        });
+
+        // Handle inflate stream errors
+        inflate.on('error', (err: Error) => {
+          this.emitError(err);
+        });
+      }
     }
 
     // Lock until consumer calls next()
@@ -379,11 +407,16 @@ export default class ZipExtract extends EventEmitter {
     const chunk = this.buffer.consume(available);
     this.bytesRemaining -= available;
 
-    // If buffering compressed data for DEFLATE
-    if (this.compressedChunks !== null) {
+    // Streaming DEFLATE: push directly to inflate stream (memory efficient)
+    if (this.inflateStream !== null) {
+      this.inflateStream.write(chunk);
+    }
+    // Buffering DEFLATE for data descriptor: accumulate chunks
+    else if (this.compressedChunks !== null) {
       this.compressedChunks.push(chunk);
-    } else if (this.currentStream) {
-      // STORE - write directly and calculate running CRC
+    }
+    // STORE: write directly to output and calculate running CRC
+    else if (this.currentStream) {
       if (this.options.verifyCrc !== false) {
         this.runningCrc = crc32(chunk, this.runningCrc);
       }
@@ -401,7 +434,52 @@ export default class ZipExtract extends EventEmitter {
    * Finish a known-size entry
    */
   private finishKnownSizeEntry(): boolean {
-    // If we have buffered compressed data (DEFLATE), decompress now
+    // If we're already waiting for inflate completion, don't do anything
+    if (this.waitingForInflate) {
+      return false;
+    }
+
+    // Streaming DEFLATE: end the inflate stream and let handlers finish the entry
+    if (this.inflateStream !== null) {
+      const inflate = this.inflateStream;
+      const entryStream = this.currentStream;
+
+      // Clear inflateStream reference and set waiting flag
+      this.inflateStream = null;
+      this.waitingForInflate = true;
+
+      // Set up end handler to verify CRC and close entry stream
+      oo(inflate, ['end', 'close'], () => {
+        this.waitingForInflate = false;
+
+        // Verify CRC from running calculation (updated incrementally in data handler)
+        if (this.options.verifyCrc !== false) {
+          if (this.runningCrc !== this.expectedCrc) {
+            this.emitError(C.createZipError(`CRC32 mismatch: expected ${this.expectedCrc.toString(16)}, got ${this.runningCrc.toString(16)}`, C.ZipErrorCode.CRC_MISMATCH));
+            return;
+          }
+        }
+        // Clean up and finish entry
+        if (entryStream) {
+          entryStream.end();
+        }
+        this.currentStream = null;
+        this.currentHeader = null;
+        this.runningCrc = 0;
+        this.expectedCrc = 0;
+        this.state = State.SIGNATURE;
+
+        // Resume processing to handle next entry
+        this.process();
+      });
+
+      // End the inflate stream to flush remaining data
+      inflate.end();
+      // Return false to stop processing loop - completion is async
+      return false;
+    }
+
+    // Buffered DEFLATE (data descriptor case): decompress all at once
     if (this.compressedChunks !== null && this.compressedChunks.length > 0) {
       const compressedData = Buffer.concat(this.compressedChunks);
       this.compressedChunks = null;
@@ -426,7 +504,7 @@ export default class ZipExtract extends EventEmitter {
         this.emitError(err as Error);
         return false;
       }
-    } else if (this.options.verifyCrc !== false) {
+    } else if (this.options.verifyCrc !== false && this.inflateStream === null) {
       // For STORE entries, verify CRC from running calculation
       if (this.runningCrc !== this.expectedCrc) {
         this.emitError(C.createZipError(`CRC32 mismatch: expected ${this.expectedCrc.toString(16)}, got ${this.runningCrc.toString(16)}`, C.ZipErrorCode.CRC_MISMATCH));
@@ -666,6 +744,10 @@ export default class ZipExtract extends EventEmitter {
       this.currentStream = null;
     }
 
+    // Clean up inflate stream if still present
+    this.inflateStream = null;
+    this.waitingForInflate = false;
+
     // Clean up data descriptor buffers
     this.compressedChunks = null;
 
@@ -735,11 +817,22 @@ export default class ZipExtract extends EventEmitter {
 
     // Propagate error to current entry stream so consumers receive it
     if (this.currentStream) {
-      this.currentStream.emit('error', err);
+      const stream = this.currentStream;
       this.currentStream = null;
+      // Only emit to stream if it has error listeners, to avoid uncaught exception
+      // For async errors (like streaming inflate), the consumer may have detached
+      const listeners = stream.listeners && stream.listeners('error');
+      if (listeners && listeners.length > 0) {
+        stream.emit('error', err);
+      } else {
+        // Use deferred error emission for streams without listeners
+        this.emitErrorToStream(stream as NodeJS.EventEmitter, err);
+      }
     }
 
     // Clean up state
+    this.inflateStream = null;
+    this.waitingForInflate = false;
     this.compressedChunks = null;
     this.currentHeader = null;
 

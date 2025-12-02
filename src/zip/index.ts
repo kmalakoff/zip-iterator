@@ -4,8 +4,7 @@
  * Forward-only ZIP parsing for streaming extraction.
  */
 
-export { crc32, crc32Region, verifyCrc32, verifyCrc32Region } from 'extract-base-iterator';
-export { default as BufferList } from './BufferList.ts';
+export { BufferList, crc32, crc32Region, verifyCrc32, verifyCrc32Region } from 'extract-base-iterator';
 export * from './CentralDirectory.ts';
 export * from './constants.ts';
 export * from './cp437.ts';

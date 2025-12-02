@@ -1,1 +1,1 @@
-ignores: ["zip-iterator", "lzma-native", "readable-stream"]
+ignores: ["node-version-use", "ts-dev-stack", "@biomejs/biome", "zip-iterator", "lzma-native", "readable-stream"]

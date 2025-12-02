@@ -4,7 +4,7 @@
  * Parses ZIP files in a single forward pass using Local File Headers.
  * Does not require seeking or the Central Directory.
  *
- * Uses pako for pure JavaScript decompression (works on all Node versions)
+ * Uses native zlib on Node 0.11.12+, falls back to pako for older versions
  *
  * Events:
  *   'entry' (header: LocalFileHeader, stream: Readable, next: () => void)
@@ -13,10 +13,8 @@
  */
 
 import { EventEmitter } from 'events';
-import { bufferFrom, crc32 } from 'extract-base-iterator';
-import pako from 'pako';
+import { BufferList, crc32, inflateRaw } from 'extract-base-iterator';
 import Stream from 'stream';
-import BufferList from './BufferList.ts';
 import * as C from './constants.ts';
 import { type LocalFileHeader, parseDataDescriptor, parseLocalFileHeader } from './headers.ts';
 
@@ -329,7 +327,7 @@ export default class ZipExtract extends EventEmitter {
     this.runningCrc = 0;
     this.expectedCrc = header.crc32;
 
-    // For DEFLATE, we'll buffer compressed data and decompress with pako
+    // For DEFLATE, we'll buffer compressed data and decompress later
     if (header.compressionMethod === C.METHOD_DEFLATE) {
       this.compressedChunks = [];
     }
@@ -409,9 +407,8 @@ export default class ZipExtract extends EventEmitter {
       this.compressedChunks = null;
 
       try {
-        // Use pako for synchronous decompression (works on all Node versions)
-        const decompressed = pako.inflateRaw(compressedData);
-        const decompressedBuf = bufferFrom(decompressed);
+        // Use native zlib on Node 0.11.12+, pako fallback for older versions
+        const decompressedBuf = inflateRaw(compressedData);
 
         // Verify CRC if enabled
         if (this.options.verifyCrc !== false) {
@@ -511,10 +508,10 @@ export default class ZipExtract extends EventEmitter {
     // Clean up compressed chunks since we've extracted what we need
     this.compressedChunks = null;
 
-    // Decompress using pako and emit to consumer
+    // Decompress and emit to consumer
     try {
-      const decompressed = pako.inflateRaw(compressedData);
-      this.finishDeflateEntry(bufferFrom(decompressed));
+      const decompressed = inflateRaw(compressedData);
+      this.finishDeflateEntry(decompressed);
     } catch (err) {
       this.emitError(err as Error);
       return false;

@@ -47,7 +47,7 @@
   "dependencies": {
     "call-once-fn": "*",
     "extract-base-iterator": "*",
-    "on-one": "^1.0.5",
+    "on-one": "^1.0.6",
     "readable-stream": "^2.3.7"
   },
   "devDependencies": {
@@ -57,7 +57,7 @@
     "cr": "*",
     "fs-iterator": "*",
     "fs-stats-spys": "*",
-    "get-remote": "^2.2.1",
+    "get-remote": "^2.2.2",
     "mkdirp-classic": "*",
     "node-version-use": "*",
     "pinkie-promise": "*",

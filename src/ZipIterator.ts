@@ -1,4 +1,4 @@
-import BaseIterator from 'extract-base-iterator';
+import BaseIterator, { waitForAccess } from 'extract-base-iterator';
 import fs from 'fs';
 import oo from 'on-one';
 import os from 'os';
@@ -78,6 +78,8 @@ export default class ZipIterator extends BaseIterator {
     });
 
     // Handle write completion using on-one for Node 0.8 compatibility
+    // Note: Node 0.8 may only emit 'close', not 'finish'. We use waitForAccess
+    // to handle Windows where 'close' can fire before file is fully written.
     oo(writeStream, ['error', 'finish', 'close'], (err?: Error) => {
       if (err) {
         this.end(err);
@@ -86,13 +88,18 @@ export default class ZipIterator extends BaseIterator {
 
       if (this.done) return;
 
-      // Read Central Directory from temp file
-      readCentralDirectory(tempPath, (cdErr, map) => {
+      // Wait for file to be accessible (handles Windows timing issues)
+      waitForAccess(tempPath, () => {
         if (this.done) return;
-        if (!cdErr && map) this.centralDir = map;
 
-        // Start streaming from temp file
-        this.startStreaming(fs.createReadStream(tempPath));
+        // Read Central Directory from temp file
+        readCentralDirectory(tempPath, (cdErr, map) => {
+          if (this.done) return;
+          if (!cdErr && map) this.centralDir = map;
+
+          // Start streaming from temp file
+          this.startStreaming(fs.createReadStream(tempPath));
+        });
       });
     });
 

@@ -48,7 +48,7 @@
   "dependencies": {
     "call-once-fn": "*",
     "extract-base-iterator": "*",
-    "on-one": "^1.0.7",
+    "on-one": "^1.0.8",
     "readable-stream": "^2.3.7"
   },
   "devDependencies": {

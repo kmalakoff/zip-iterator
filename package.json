@@ -49,7 +49,7 @@
     "call-once-fn": "*",
     "extract-base-iterator": "*",
     "on-one": "^1.0.8",
-    "readable-stream": "^2.3.7"
+    "readable-stream": "^2.3.8"
   },
   "devDependencies": {
     "@types/mocha": "*",

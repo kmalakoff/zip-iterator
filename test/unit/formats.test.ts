@@ -1,10 +1,10 @@
 import assert from 'assert';
 import cr from 'cr';
 import fs from 'fs';
+import { safeRm } from 'fs-remove-compat';
 import getRemote from 'get-remote';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
-import rimraf2 from 'rimraf2';
 
 import ZipIterator from 'zip-iterator';
 import { DATA_DIR, TMP_DIR } from '../lib/constants.ts';
@@ -110,7 +110,7 @@ function expectExtractionError(zipPath: string, expectedErrorMatch: RegExp, expe
 
 describe('formats', () => {
   beforeEach((done) => {
-    rimraf2(FORMATS_TMP, { disableGlob: true }, () => {
+    safeRm(FORMATS_TMP, () => {
       mkdirp(FORMATS_TMP, done);
     });
   });

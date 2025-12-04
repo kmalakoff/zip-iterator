@@ -58,7 +58,7 @@
     "fs-iterator": "*",
     "fs-remove-compat": "*",
     "fs-stats-spys": "*",
-    "get-remote": "^2.2.7",
+    "get-remote": "^2.2.8",
     "mkdirp-classic": "*",
     "node-version-use": "*",
     "pinkie-promise": "*",

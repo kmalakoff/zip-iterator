@@ -1,8 +1,8 @@
 import assert from 'assert';
+import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Pinkie from 'pinkie-promise';
-import rimraf2 from 'rimraf2';
 
 import ZipIterator from 'zip-iterator';
 import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
@@ -53,7 +53,7 @@ describe('asyncAwait', () => {
   })();
 
   beforeEach((callback) => {
-    rimraf2(TMP_DIR, { disableGlob: true }, () => {
+    safeRm(TMP_DIR, () => {
       mkdirp(TMP_DIR, callback);
     });
   });

@@ -1,5 +1,6 @@
 import BaseIterator, { waitForAccess } from 'extract-base-iterator';
 import fs from 'fs';
+import mkdirp from 'mkdirp-classic';
 import oo from 'on-one';
 import os from 'os';
 import path from 'path';
@@ -63,8 +64,12 @@ export default class ZipIterator extends BaseIterator {
   }
 
   private bufferStreamAndStart(source: NodeJS.ReadableStream): void {
+    // Ensure temp directory exists (may not exist on Windows with Node 0.8 fallback to /tmp)
+    const _tmpdir = tmpdir();
+    mkdirp.sync(_tmpdir);
+
     // Generate temp file path
-    this.tempPath = path.join(tmpdir(), `zip-iterator-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`);
+    this.tempPath = path.join(_tmpdir, `zip-iterator-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`);
     this.lock.tempPath = this.tempPath;
 
     const writeStream = fs.createWriteStream(this.tempPath);

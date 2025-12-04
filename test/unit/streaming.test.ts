@@ -9,9 +9,9 @@
 import assert from 'assert';
 import cr from 'cr';
 import fs from 'fs';
+import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
-import rimraf2 from 'rimraf2';
 
 import ZipIterator from 'zip-iterator';
 import { DATA_DIR, TMP_DIR } from '../lib/constants.ts';
@@ -20,7 +20,7 @@ const STREAMING_TMP = path.join(TMP_DIR, 'streaming');
 
 describe('streaming mode', () => {
   beforeEach((done) => {
-    rimraf2(STREAMING_TMP, { disableGlob: true }, () => {
+    safeRm(STREAMING_TMP, () => {
       mkdirp(STREAMING_TMP, done);
     });
   });

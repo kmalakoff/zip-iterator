@@ -1,9 +1,9 @@
 import assert from 'assert';
 import fs from 'fs';
+import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Queue from 'queue-cb';
-import rimraf2 from 'rimraf2';
 import ZipIterator from 'zip-iterator';
 import zlib from 'zlib';
 import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
@@ -38,7 +38,7 @@ function extract(iterator, dest, options, callback) {
 
 describe('callback', () => {
   beforeEach((callback) => {
-    rimraf2(TMP_DIR, { disableGlob: true }, () => {
+    safeRm(TMP_DIR, () => {
       mkdirp(TMP_DIR, callback);
     });
   });

@@ -10,7 +10,7 @@
 
 // CP437 to Unicode mapping for bytes 0x80-0xFF
 // prettier-ignore
-var CP437_HIGH: string[] = [
+const CP437_HIGH: string[] = [
   // 0x80-0x8F
   '\u00C7',
   '\u00FC',
@@ -158,9 +158,9 @@ var CP437_HIGH: string[] = [
  * @returns Decoded Unicode string
  */
 export function decodeCP437(buf: Buffer, start: number, end: number): string {
-  var result = '';
-  for (var i = start; i < end; i++) {
-    var byte = buf[i];
+  let result = '';
+  for (let i = start; i < end; i++) {
+    const byte = buf[i];
     if (byte < 0x80) {
       // Standard ASCII
       result += String.fromCharCode(byte);
@@ -177,7 +177,7 @@ export function decodeCP437(buf: Buffer, start: number, end: number): string {
  * If true, CP437 and UTF-8 will produce identical results
  */
 export function isAscii(buf: Buffer, start: number, end: number): boolean {
-  for (var i = start; i < end; i++) {
+  for (let i = start; i < end; i++) {
     if (buf[i] >= 0x80) {
       return false;
     }

@@ -176,7 +176,7 @@ export const UNIX_TYPE_SOCKET = 12;
 // =============================================================================
 
 /** Error codes for programmatic error handling */
-export var ZipErrorCode = {
+export const ZipErrorCode = {
   INVALID_SIGNATURE: 'ZIP_INVALID_SIGNATURE',
   CRC_MISMATCH: 'ZIP_CRC_MISMATCH',
   UNSUPPORTED_METHOD: 'ZIP_UNSUPPORTED_METHOD',
@@ -193,7 +193,7 @@ export interface ZipCodedError extends Error {
  * Create an error with a code property
  */
 export function createZipError(message: string, code: string): ZipCodedError {
-  var err = new Error(message) as ZipCodedError;
+  const err = new Error(message) as ZipCodedError;
   err.code = code;
   return err;
 }

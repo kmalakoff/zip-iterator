@@ -1,6 +1,6 @@
 {
   "name": "zip-iterator",
-  "version": "3.0.15",
+  "version": "3.0.16",
   "description": "Extract contents from zip archive type using an iterator API using streams or paths. Use stream interface and pipe transforms to add decompression algorithms",
   "keywords": [
     "extract",

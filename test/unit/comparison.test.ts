@@ -14,12 +14,15 @@ import { rmSync } from 'fs-remove-compat';
 import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
+import url from 'url';
 import ZipIterator from 'zip-iterator';
-import { TMP_DIR } from '../lib/constants.ts';
+
+const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
+const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
 
 // Test configuration
 const NODEJS_ZIP_URL = 'https://nodejs.org/dist/v24.12.0/node-v24.12.0-win-x64.zip';
-const CACHE_DIR = path.join(process.cwd(), '.cache');
+const CACHE_DIR = path.join(__dirname, '..', '..', '.cache');
 const ZIP_FILE = path.join(CACHE_DIR, 'node-v24.12.0-win-x64.zip');
 const NATIVE_EXTRACT_DIR = path.join(TMP_DIR, 'zip');
 const ITERATOR_EXTRACT_DIR = path.join(TMP_DIR, 'zip-iterator');

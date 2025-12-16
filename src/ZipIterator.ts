@@ -17,7 +17,7 @@ interface ZipLock extends Lock {
 }
 
 export default class ZipIterator extends BaseIterator<Entry> {
-  lock: ZipLock | null;
+  private lock: ZipLock | null;
   private extract: ZipExtract | null;
   private centralDir: CentralDirMap | null;
   private tempPath: string | null;

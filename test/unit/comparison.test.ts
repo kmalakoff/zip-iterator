@@ -34,9 +34,6 @@ interface FileStats {
   type: 'directory' | 'file' | 'symlink' | 'other';
 }
 
-/**
- * Download zip file using get-file-compat
- */
 function downloadZipFile(callback: (err: Error | null) => void): void {
   if (fs.existsSync(ZIP_FILE)) {
     callback(null);

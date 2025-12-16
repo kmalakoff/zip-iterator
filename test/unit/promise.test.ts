@@ -5,10 +5,19 @@ import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Pinkie from 'pinkie-promise';
 import Queue from 'queue-cb';
+import url from 'url';
 import ZipIterator from 'zip-iterator';
 import zlib from 'zlib';
-import { DATA_DIR, TARGET, TMP_DIR } from '../lib/constants.ts';
-import validateFiles from '../lib/validateFiles.ts';
+
+import bz2 from '../lib/bz2-stream.ts';
+import { getFixture } from '../lib/fixtures.ts';
+import getStats from '../lib/getStats.ts';
+
+const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
+const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
+const TARGET = path.join(TMP_DIR, 'target');
+
+const fixture = getFixture('fixture.zip');
 
 function extract(iterator, dest, options, callback) {
   const links = [];
@@ -37,6 +46,15 @@ function extract(iterator, dest, options, callback) {
     .catch(callback);
 }
 
+function verify(options, callback) {
+  const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
+  getStats(statsPath, (err, actual) => {
+    if (err) return callback(err);
+    assert.deepEqual(actual, fixture.expected);
+    callback();
+  });
+}
+
 describe('promise', () => {
   (() => {
     // patch and restore promise
@@ -51,20 +69,24 @@ describe('promise', () => {
   })();
 
   beforeEach((callback) => {
-    safeRm(TMP_DIR, () => {
-      mkdirp(TMP_DIR, callback);
+    safeRm(TARGET, () => {
+      mkdirp(TARGET, callback);
     });
+  });
+
+  afterEach((callback) => {
+    safeRm(TARGET, callback);
   });
 
   describe('happy path', () => {
     it('destroy iterator', () => {
-      const iterator = new ZipIterator(path.join(DATA_DIR, 'fixture.zip'));
+      const iterator = new ZipIterator(fixture.path);
       iterator.destroy();
       assert.ok(true);
     });
 
     it('destroy entries', (done) => {
-      const iterator = new ZipIterator(path.join(DATA_DIR, 'fixture.zip'));
+      const iterator = new ZipIterator(fixture.path);
       iterator.forEach(
         (entry): undefined => {
           entry.destroy();
@@ -81,127 +103,79 @@ describe('promise', () => {
 
     it('extract - no strip - concurrency 1', (done) => {
       const options = { now: new Date(), concurrency: 1 };
-      extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
-        if (err) {
-          done(err);
-          return;
-        }
+      extract(new ZipIterator(fixture.path), TARGET, options, (err) => {
+        if (err) return done(err);
+        verify(options, done);
+      });
+    });
 
-        validateFiles(options, 'zip', (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
-          done();
-        });
+    it('extract - no strip - concurrency 4', (done) => {
+      const options = { now: new Date(), concurrency: 4 };
+      extract(new ZipIterator(fixture.path), TARGET, options, (err) => {
+        if (err) return done(err);
+        verify(options, done);
       });
     });
 
     it('extract - no strip - concurrency Infinity', (done) => {
       const options = { now: new Date(), concurrency: Infinity };
-      extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
-        if (err) {
-          done(err);
-          return;
-        }
-
-        validateFiles(options, 'zip', (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
-          done();
-        });
+      extract(new ZipIterator(fixture.path), TARGET, options, (err) => {
+        if (err) return done(err);
+        verify(options, done);
       });
     });
 
     it('extract - stream', (done) => {
       const options = { now: new Date() };
-      const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip'));
+      const source = fs.createReadStream(fixture.path);
       extract(new ZipIterator(source), TARGET, options, (err) => {
-        if (err) {
-          done(err);
-          return;
-        }
-
-        validateFiles(options, 'tar', (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
-          done();
-        });
+        if (err) return done(err);
+        verify(options, done);
       });
     });
 
     it('extract - stream gz', (done) => {
       const options = { now: new Date() };
-      const source = fs.createReadStream(path.join(DATA_DIR, 'fixture.zip.gz'));
-      const pipeline = source.pipe(zlib.createUnzip());
-      extract(new ZipIterator(pipeline), TARGET, options, (err) => {
-        if (err) {
-          done(err);
-          return;
-        }
+      const gzFixture = getFixture('fixture.zip.gz');
+      const source = fs.createReadStream(gzFixture.path).pipe(zlib.createUnzip());
+      extract(new ZipIterator(source), TARGET, options, (err) => {
+        if (err) return done(err);
+        verify(options, done);
+      });
+    });
 
-        validateFiles(options, 'tar', (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
-          done();
-        });
+    it('extract - stream bz2', (done) => {
+      const options = { now: new Date() };
+      const bz2Fixture = getFixture('fixture.zip.bz2');
+      const source = fs.createReadStream(bz2Fixture.path).pipe(bz2());
+      extract(new ZipIterator(source), TARGET, options, (err) => {
+        if (err) return done(err);
+        verify(options, done);
       });
     });
 
     it('extract - strip 1', (done) => {
       const options = { now: new Date(), strip: 1 };
-      extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
-        if (err) {
-          done(err);
-          return;
-        }
-
-        validateFiles(options, 'zip', (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
-          done();
-        });
+      extract(new ZipIterator(fixture.path), TARGET, options, (err) => {
+        if (err) return done(err);
+        verify(options, done);
       });
     });
 
     it('extract multiple times', (done) => {
       const options = { now: new Date(), strip: 1 };
-      extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
-        if (err) {
-          done(err);
-          return;
-        }
+      extract(new ZipIterator(fixture.path), TARGET, options, (err) => {
+        if (err) return done(err);
 
-        validateFiles(options, 'tar', (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
+        verify(options, (err) => {
+          if (err) return done(err);
 
-          extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
+          extract(new ZipIterator(fixture.path), TARGET, options, (err) => {
             assert.ok(err);
 
-            extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, { force: true, ...options }, (err) => {
-              if (err) {
-                done(err);
-                return;
-              }
-
-              validateFiles(options, 'tar', (err) => {
-                if (err) {
-                  done(err);
-                  return;
-                }
-                done();
-              });
+            extract(new ZipIterator(fixture.path), TARGET, { force: true, ...options }, (err) => {
+              if (err) return done(err);
+              verify(options, done);
             });
           });
         });
@@ -212,7 +186,7 @@ describe('promise', () => {
   describe('unhappy path', () => {
     it('should fail with bad path', (done) => {
       const options = { now: new Date(), strip: 2 };
-      extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip' + 'does-not-exist')), TARGET, options, (err) => {
+      extract(new ZipIterator(`${fixture.path}does-not-exist`), TARGET, options, (err) => {
         assert.ok(!!err);
         done();
       });
@@ -220,7 +194,7 @@ describe('promise', () => {
 
     it('should fail with bad stream', (done) => {
       const options = { now: new Date(), strip: 2 };
-      extract(new ZipIterator(fs.createReadStream(path.join(DATA_DIR, 'fixture.zip' + 'does-not-exist'))), TARGET, options, (err) => {
+      extract(new ZipIterator(fs.createReadStream(`${fixture.path}does-not-exist`)), TARGET, options, (err) => {
         assert.ok(!!err);
         done();
       });
@@ -228,7 +202,7 @@ describe('promise', () => {
 
     it('should fail with too large strip', (done) => {
       const options = { now: new Date(), strip: 2 };
-      extract(new ZipIterator(path.join(DATA_DIR, 'fixture.zip')), TARGET, options, (err) => {
+      extract(new ZipIterator(fixture.path), TARGET, options, (err) => {
         assert.ok(!!err);
         done();
       });

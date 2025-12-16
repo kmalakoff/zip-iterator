@@ -13,9 +13,12 @@ import { safeRm } from 'fs-remove-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 
+import url from 'url';
 import ZipIterator from 'zip-iterator';
-import { DATA_DIR, TMP_DIR } from '../lib/constants.ts';
 
+const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
 const STREAMING_TMP = path.join(TMP_DIR, 'streaming');
 
 describe('streaming mode', () => {

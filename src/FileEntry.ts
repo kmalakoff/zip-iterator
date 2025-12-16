@@ -79,7 +79,10 @@ export default class ZipFileEntry extends FileEntry {
 
   destroy() {
     FileEntry.prototype.destroy.call(this);
-    this.stream = null;
+    if (this.stream) {
+      this.stream.resume(); // drain stream
+      this.stream = null;
+    }
     if (this.lock) {
       this.lock.release();
       this.lock = null;

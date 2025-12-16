@@ -6,11 +6,11 @@
  */
 
 import once from 'call-once-fn';
-import { type DirectoryAttributes, DirectoryEntry, type Entry, type FileAttributes, type LinkAttributes, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
+import { type DirectoryAttributes, DirectoryEntry, type FileAttributes, type LinkAttributes, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
 import FileEntry from './FileEntry.ts';
 import parseExternalFileAttributes from './lib/parseExternalFileAttributes.ts';
 import streamToString from './lib/streamToString.ts';
-import type { LockT } from './types.ts';
+import type { Entry, Lock } from './types.ts';
 import { findAsiInfo, findExtendedTimestamp } from './zip/extra-fields.ts';
 import type { CentralDirEntry, LocalFileHeader } from './zip/index.ts';
 
@@ -24,7 +24,7 @@ export type EntryCallback = (error?: Error, result?: IteratorResult<Entry>) => v
 /**
  * Create an entry from a LocalFileHeader and stream
  */
-export default function createEntry(header: LocalFileHeader, stream: NodeJS.ReadableStream, lock: LockT, next: () => void, callback: EntryCallback, cdEntry?: CentralDirEntry | null): void {
+export default function createEntry(header: LocalFileHeader, stream: NodeJS.ReadableStream, lock: Lock, next: () => void, callback: EntryCallback, cdEntry?: CentralDirEntry | null): void {
   const cb = once((err?: Error, entry?: Entry) => {
     // Call next to allow parser to continue
     next();

@@ -1,19 +1,23 @@
-import BaseIterator, { waitForAccess } from 'extract-base-iterator';
+import BaseIterator, { Lock, waitForAccess } from 'extract-base-iterator';
 import fs from 'fs';
 import mkdirp from 'mkdirp-classic';
 import oo from 'on-one';
 import os from 'os';
 import path from 'path';
 import createEntry from './createEntry.ts';
-import Lock from './lib/Lock.ts';
-import type { LockT, ZipIteratorOptions } from './types.ts';
+import type { Entry, ZipIteratorOptions } from './types.ts';
 import { type CentralDirMap, type LocalFileHeader, readCentralDirectory, ZipExtract } from './zip/index.ts';
 
 // Get temp directory
 const tmpdir = os.tmpdir || (os as { tmpdir?: () => string }).tmpdir || (() => '/tmp');
 
-export default class ZipIterator extends BaseIterator {
-  lock: LockT;
+// Extended Lock type with zip-specific properties
+interface ZipLock extends Lock {
+  setup?: (() => undefined) | null;
+}
+
+export default class ZipIterator extends BaseIterator<Entry> {
+  lock: ZipLock | null;
   private extract: ZipExtract | null;
   private centralDir: CentralDirMap | null;
   private tempPath: string | null;
@@ -22,8 +26,9 @@ export default class ZipIterator extends BaseIterator {
 
   constructor(source: string | NodeJS.ReadableStream, options: ZipIteratorOptions = {}) {
     super(options);
-    this.lock = new Lock();
-    this.lock.iterator = this;
+    const lock: ZipLock = new Lock();
+    this.lock = lock;
+    lock.onDestroy = (err) => BaseIterator.prototype.end.call(this, err);
     this.centralDir = null;
     this.tempPath = null;
     this.sourceStream = null;
@@ -37,7 +42,7 @@ export default class ZipIterator extends BaseIterator {
       cancelled = true;
     };
     this.processing.push(setup);
-    this.lock.setup = setup;
+    lock.setup = setup;
 
     // Create the forward-only parser
     this.extract = new ZipExtract();
@@ -70,10 +75,14 @@ export default class ZipIterator extends BaseIterator {
 
     // Generate temp file path
     this.tempPath = path.join(_tmpdir, `zip-iterator-${Date.now()}-${Math.random().toString(36).slice(2)}.tmp`);
-    this.lock.tempPath = this.tempPath;
+
+    // Register cleanup for temp file
+    const tempPath = this.tempPath;
+    this.lock.registerCleanup(() => {
+      fs.unlink(tempPath, () => {});
+    });
 
     const writeStream = fs.createWriteStream(this.tempPath);
-    const tempPath = this.tempPath;
 
     // Handle source errors
     source.on('error', (err: Error) => {
@@ -112,12 +121,31 @@ export default class ZipIterator extends BaseIterator {
   }
 
   private startStreaming(stream: NodeJS.ReadableStream): void {
+    // Guard: if iterator was destroyed before async callback, clean up and exit
+    if (!this.lock) {
+      const s = stream as NodeJS.ReadableStream & { destroy?: () => void };
+      if (typeof s.destroy === 'function') s.destroy();
+      return;
+    }
+
     // Store reference to destroy on end
     this.sourceStream = stream;
 
-    // Store resources on lock for cleanup
-    this.lock.sourceStream = stream;
-    this.lock.extract = this.extract;
+    // Register cleanup for source stream
+    this.lock.registerCleanup(() => {
+      const s = stream as NodeJS.ReadableStream & { destroy?: () => void };
+      if (typeof s.destroy === 'function') {
+        s.destroy();
+      }
+    });
+
+    // Register cleanup for extract parser
+    const extract = this.extract;
+    this.lock.registerCleanup(() => {
+      if (extract) {
+        extract.end();
+      }
+    });
 
     // IMPORTANT: Set up parser event handlers FIRST, before data flows
     // In Node 0.8, streams are "flowing" immediately when you attach a 'data' handler

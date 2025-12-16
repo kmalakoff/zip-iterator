@@ -2,7 +2,7 @@ import assert from 'assert';
 import cr from 'cr';
 import fs from 'fs';
 import { safeRm } from 'fs-remove-compat';
-import getRemote from 'get-remote';
+import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 
@@ -354,7 +354,7 @@ describe('formats', () => {
           done();
           return;
         }
-        getRemote(ZIP64_URL).file(ZIP64_DIR, done);
+        getFile(ZIP64_URL, ZIP64_PATH, done);
       });
     });
 

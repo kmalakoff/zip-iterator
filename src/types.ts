@@ -4,20 +4,14 @@
 
 import type { ExtractOptions as BaseExtractOptions } from 'extract-base-iterator';
 
-export { DirectoryEntry, type Entry, type ExtractOptions, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
+export { DirectoryEntry, type ExtractOptions, LinkEntry, Lock, SymbolicLinkEntry } from 'extract-base-iterator';
 export { default as FileEntry } from './FileEntry.ts';
 
-export interface LockT {
-  iterator?: unknown;
-  err?: Error;
-  // cleanup resources
-  tempPath?: string;
-  extract?: unknown;
-  sourceStream?: NodeJS.ReadableStream;
-  setup: (() => undefined) | null;
-  retain: () => void;
-  release: () => void;
-}
+import type { DirectoryEntry, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
+import type FileEntry from './FileEntry.ts';
+
+// Zip-specific Entry union type with zip-specific FileEntry
+export type Entry = DirectoryEntry | FileEntry | LinkEntry | SymbolicLinkEntry;
 
 /**
  * Options for ZipIterator constructor

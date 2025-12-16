@@ -4,18 +4,18 @@
  * Wraps a decompressed stream with the entry lifecycle.
  */
 
-import callOnce from 'call-once-fn';
+import once from 'call-once-fn';
 import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
 import fs from 'fs';
 import oo from 'on-one';
 
-import type { ExtractOptions, LockT } from './types.ts';
+import type { ExtractOptions, Lock } from './types.ts';
 
 export default class ZipFileEntry extends FileEntry {
-  private lock: LockT;
+  private lock: Lock;
   private stream: NodeJS.ReadableStream;
 
-  constructor(attributes: FileAttributes, stream: NodeJS.ReadableStream, lock: LockT) {
+  constructor(attributes: FileAttributes, stream: NodeJS.ReadableStream, lock: Lock) {
     super(attributes);
     this.stream = stream;
     this.lock = lock;
@@ -53,8 +53,8 @@ export default class ZipFileEntry extends FileEntry {
     const stream = this.stream;
     this.stream = null; // Prevent reuse
 
-    // Use callOnce since errors can come from either stream
-    const cb = callOnce((err?: Error) => {
+    // Use once since errors can come from either stream
+    const cb = once((err?: Error) => {
       err ? callback(err) : waitForAccess(fullPath, callback);
     });
 

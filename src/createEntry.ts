@@ -6,13 +6,15 @@
  */
 
 import once from 'call-once-fn';
-import { type DirectoryAttributes, DirectoryEntry, type FileAttributes, type LinkAttributes, LinkEntry, SymbolicLinkEntry } from 'extract-base-iterator';
+import { type DirectoryAttributes, DirectoryEntry, type FileAttributes, type LinkAttributes, LinkEntry, normalizePath, SymbolicLinkEntry, streamToString } from 'extract-base-iterator';
 import FileEntry from './FileEntry.ts';
 import parseExternalFileAttributes from './lib/parseExternalFileAttributes.ts';
-import streamToString from './lib/streamToString.ts';
 import type { Entry, Lock } from './types.ts';
 import { findAsiInfo, findExtendedTimestamp } from './zip/extra-fields.ts';
 import type { CentralDirEntry, LocalFileHeader } from './zip/index.ts';
+
+// setImmediate is preferred (Node 0.10+), falls back to setTimeout for Node 0.8
+const defer = typeof setImmediate === 'function' ? setImmediate : (fn: () => void) => setTimeout(fn, 0);
 
 // Unix file type bits (S_IFMT mask = 0xF000)
 const S_IFLNK = 0xa000; // Symbolic link
@@ -28,14 +30,16 @@ export default function createEntry(header: LocalFileHeader, stream: NodeJS.Read
   const cb = once((err?: Error, entry?: Entry) => {
     // Call next to allow parser to continue
     next();
-    // Return result to iterator
-    if (err) {
-      callback(err);
-    } else if (entry) {
-      callback(null, { done: false, value: entry });
-    } else {
-      callback(null, { done: true, value: null });
-    }
+    // Use defer to ensure proper async behavior with the BaseIterator
+    defer(() => {
+      if (err) {
+        callback(err);
+      } else if (entry) {
+        callback(null, { done: false, value: entry });
+      } else {
+        callback(null, { done: true, value: null });
+      }
+    });
   });
 
   // Parse external attributes for type and permissions
@@ -84,23 +88,8 @@ function getAttributes(
   mode: number;
   mtime: number;
 } {
-  // Clean up path - remove leading/trailing slashes, normalize separators
-  let filePath = header.fileName;
-  // Replace backslashes with forward slashes
-  filePath = filePath.split('\\').join('/');
-  // Remove leading slashes
-  while (filePath.charAt(0) === '/') {
-    filePath = filePath.substring(1);
-  }
-  // Remove empty path segments
-  const segments = filePath.split('/');
-  const cleanSegments: string[] = [];
-  for (let i = 0; i < segments.length; i++) {
-    if (segments[i].length > 0) {
-      cleanSegments.push(segments[i]);
-    }
-  }
-  filePath = cleanSegments.join('/');
+  // Normalize path - remove leading/trailing slashes, normalize separators
+  const filePath = normalizePath(header.fileName);
 
   // Detect directory by trailing slash in original filename
   const isDirectory = header.fileName.charAt(header.fileName.length - 1) === '/';

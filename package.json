@@ -47,8 +47,8 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.1",
-    "extract-base-iterator": "^2.5.0",
-    "on-one": "^1.0.10",
+    "extract-base-iterator": "^2.6.1",
+    "on-one": "^1.0.0",
     "readable-stream": "^2.0.2"
   },
   "devDependencies": {
@@ -59,10 +59,11 @@
     "fs-remove-compat": "^1.0.0",
     "fs-stats-spys": "^1.0.0",
     "get-file-compat": "^2.0.0",
-    "mkdirp-classic": "^0.5.3",
+    "mkdirp-classic": "^0.5.2",
     "node-version-use": "*",
     "pinkie-promise": "*",
-    "queue-cb": "^1.6.3",
+    "queue-cb": "^1.0.0",
+    "through": "^2.3.8",
     "ts-dev-stack": "*",
     "tsds-config": "*"
   },

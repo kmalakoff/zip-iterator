@@ -13,7 +13,7 @@ const tmpdir = os.tmpdir || (os as { tmpdir?: () => string }).tmpdir || (() => '
 
 // Extended Lock type with zip-specific properties
 interface ZipLock extends Lock {
-  setup?: (() => undefined) | null;
+  setup?: (() => void) | null;
 }
 
 export default class ZipIterator extends BaseIterator<Entry> {
@@ -38,7 +38,7 @@ export default class ZipIterator extends BaseIterator<Entry> {
     // prematurely when stack becomes empty between entry events.
     // This is removed in end() when the iterator actually completes.
     let cancelled = false;
-    const setup = (): undefined => {
+    const setup = (): void => {
       cancelled = true;
     };
     this.processing.push(setup);

@@ -63,10 +63,7 @@ function extractWithNative(zipPath: string, destPath: string, callback: (err: Er
   // Clean up destination directory if it exists
   rmSync(destPath, { recursive: true, force: true });
   mkdirp(destPath, (err) => {
-    if (err) {
-      callback(err);
-      return;
-    }
+    if (err) return callback(err);
 
     // Extract using native unzip CLI
     exec(`unzip -q "${zipPath}" -d "${destPath}"`, callback);
@@ -80,23 +77,20 @@ function extractWithZipIterator(zipPath: string, destPath: string, callback: (er
   // Clean up destination directory if it exists
   rmSync(destPath, { recursive: true, force: true });
   mkdirp(destPath, (err) => {
-    if (err) {
-      callback(err);
-      return;
-    }
+    if (err) return callback(err);
 
     // Extract using zip-iterator
     const iterator = new ZipIterator(zipPath);
     const options = { now: new Date() };
 
     iterator.forEach(
-      (entry, callback): undefined => {
+      (entry, callback): void => {
         entry.create(destPath, options, (err) => {
           callback(err || undefined);
         });
       },
       { callbacks: true },
-      (err): undefined => {
+      (err): void => {
         callback(err || undefined);
       }
     );
@@ -123,7 +117,7 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
   });
 
   iterator.forEach(
-    (entry): undefined => {
+    (entry): void => {
       const relativePath = path.relative(dirPath, entry.fullPath);
 
       stats[relativePath] = {
@@ -153,45 +147,71 @@ function removeDir(dirPath: string): void {
   }
 }
 
+/**
+ * Check if a native tool is available
+ */
+function checkToolAvailable(checkCmd: string, callback: (available: boolean) => void): void {
+  exec(checkCmd, (err) => {
+    callback(!err);
+  });
+}
+
 describe('Comparison - zip-iterator vs native unzip', () => {
+  let toolAvailable = false;
+
   before(function (done) {
     // Increase timeout for this test (downloading and extracting large archive)
     this.timeout(120000);
 
-    // Download zip file if not already present
-    downloadZipFile((err) => {
-      if (err) {
-        done(err);
+    // Check if native unzip is available
+    checkToolAvailable('which unzip', (available) => {
+      toolAvailable = available;
+      if (!available) {
+        console.log('    Skipping zip comparison tests - native unzip not available');
+        done();
         return;
       }
 
-      // Clean up previous extractions
-      removeDir(NATIVE_EXTRACT_DIR);
-      removeDir(ITERATOR_EXTRACT_DIR);
-
-      // Extract with native unzip
-      console.log('Extracting with native unzip...');
-      extractWithNative(ZIP_FILE, NATIVE_EXTRACT_DIR, (err) => {
+      // Download zip file if not already present
+      downloadZipFile((err) => {
         if (err) {
           done(err);
           return;
         }
 
-        // Extract with zip-iterator
-        console.log('Extracting with zip-iterator...');
-        extractWithZipIterator(ZIP_FILE, ITERATOR_EXTRACT_DIR, (err) => {
+        // Clean up previous extractions
+        removeDir(NATIVE_EXTRACT_DIR);
+        removeDir(ITERATOR_EXTRACT_DIR);
+
+        // Extract with native unzip
+        console.log('Extracting with native unzip...');
+        extractWithNative(ZIP_FILE, NATIVE_EXTRACT_DIR, (err) => {
           if (err) {
             done(err);
-          } else {
-            console.log('Both extractions complete');
-            done();
+            return;
           }
+
+          // Extract with zip-iterator
+          console.log('Extracting with zip-iterator...');
+          extractWithZipIterator(ZIP_FILE, ITERATOR_EXTRACT_DIR, (err) => {
+            if (err) {
+              done(err);
+            } else {
+              console.log('Both extractions complete');
+              done();
+            }
+          });
         });
       });
     });
   });
 
-  it('should extract identical files when comparing native unzip and zip-iterator', (done) => {
+  it('should extract identical files when comparing native unzip and zip-iterator', function (done) {
+    if (!toolAvailable) {
+      this.skip();
+      return;
+    }
+
     // Collect stats from both extractions
     console.log('Collecting stats from native extraction...');
     collectStats(NATIVE_EXTRACT_DIR, (err, nativeStats) => {

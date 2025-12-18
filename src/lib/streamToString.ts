@@ -8,7 +8,7 @@
 import { bufferFrom } from 'extract-base-iterator';
 import oo from 'on-one';
 
-export type Callback = (error?: Error, result?: string) => undefined;
+export type Callback = (error?: Error, result?: string) => void;
 
 export default function streamToString(stream: NodeJS.ReadableStream, callback: Callback) {
   const chunks: Buffer[] = [];

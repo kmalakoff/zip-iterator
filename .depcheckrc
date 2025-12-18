@@ -1,1 +1,1 @@
-ignores: ["node-version-use", "ts-dev-stack", "zip-iterator", "lzma-native", "readable-stream"]
+ignores: ["node-version-use", "ts-dev-stack", "zip-iterator", "readable-stream", "unbzip2-stream"]

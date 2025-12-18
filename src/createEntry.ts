@@ -13,9 +13,6 @@ import type { Entry, Lock } from './types.ts';
 import { findAsiInfo, findExtendedTimestamp } from './zip/extra-fields.ts';
 import type { CentralDirEntry, LocalFileHeader } from './zip/index.ts';
 
-// setImmediate is preferred (Node 0.10+), falls back to setTimeout for Node 0.8
-const defer = typeof setImmediate === 'function' ? setImmediate : (fn: () => void) => setTimeout(fn, 0);
-
 // Unix file type bits (S_IFMT mask = 0xF000)
 const S_IFLNK = 0xa000; // Symbolic link
 const S_IFDIR = 0x4000; // Directory
@@ -30,8 +27,8 @@ export default function createEntry(header: LocalFileHeader, stream: NodeJS.Read
   const cb = once((err?: Error, entry?: Entry) => {
     // Call next to allow parser to continue
     next();
-    // Use defer to ensure proper async behavior with the BaseIterator
-    defer(() => {
+    // Defer to ensure proper async behavior with the BaseIterator
+    setTimeout(() => {
       if (err) {
         callback(err);
       } else if (entry) {
@@ -39,7 +36,7 @@ export default function createEntry(header: LocalFileHeader, stream: NodeJS.Read
       } else {
         callback(null, { done: true, value: null });
       }
-    });
+    }, 0);
   });
 
   // Parse external attributes for type and permissions

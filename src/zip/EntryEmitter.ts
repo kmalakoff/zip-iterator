@@ -7,9 +7,6 @@
 
 import Stream from 'stream';
 
-// setImmediate is preferred (Node 0.10+), falls back to setTimeout for Node 0.8
-const defer = typeof setImmediate === 'function' ? setImmediate : (fn: () => void) => setTimeout(fn, 0);
-
 // Use readable-stream for Node 0.8 compatibility or native
 const major = +process.versions.node.split('.')[0];
 let PassThrough: typeof Stream.PassThrough;
@@ -74,10 +71,9 @@ export function emitErrorToStream(stream: NodeJS.EventEmitter, err: Error): void
         const deferredErr = this._deferredError;
         this._deferredError = undefined;
         // Emit asynchronously to ensure listener is fully attached
-        // Use setTimeout for Node 0.8 compatibility (setImmediate not available)
-        defer(() => {
+        setTimeout(() => {
           this.emit('error', deferredErr);
-        });
+        }, 0);
       }
       return result;
     };
@@ -114,11 +110,6 @@ export function endEntryStream(stream: Stream.PassThrough | null): void {
     stream.end();
   }
 }
-
-/**
- * Export the defer function for use in other modules
- */
-export { defer };
 
 /**
  * Export PassThrough for use in other modules

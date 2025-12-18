@@ -37,11 +37,8 @@ function extractAndCollect(zipPath: string, callback: (err: Error | null, result
         });
       },
       { callbacks: true },
-      (err): undefined => {
-        if (err) {
-          callback(err);
-          return;
-        }
+      (err): void => {
+        if (err) return callback(err);
 
         // Read back the file contents
         for (let i = 0; i < results.length; i++) {
@@ -90,7 +87,7 @@ function expectExtractionError(zipPath: string, expectedErrorMatch: RegExp, expe
         });
       },
       { callbacks: true },
-      (err): undefined => {
+      (err): void => {
         const errorToCheck = (err || foundError) as CodedError | null;
         if (errorToCheck && expectedErrorMatch.test(errorToCheck.message)) {
           // Verify error code property
@@ -163,7 +160,7 @@ describe('formats', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;
@@ -380,7 +377,7 @@ describe('formats', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;

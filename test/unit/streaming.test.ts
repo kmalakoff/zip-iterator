@@ -49,7 +49,7 @@ describe('streaming mode', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;
@@ -84,7 +84,7 @@ describe('streaming mode', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;
@@ -117,7 +117,7 @@ describe('streaming mode', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;
@@ -163,7 +163,7 @@ describe('streaming mode', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;
@@ -210,7 +210,7 @@ describe('streaming mode', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;
@@ -266,7 +266,7 @@ describe('streaming mode', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;
@@ -290,7 +290,7 @@ describe('streaming mode', () => {
             });
           },
           { callbacks: true },
-          (err): undefined => {
+          (err): void => {
             if (err) {
               done(err);
               return;

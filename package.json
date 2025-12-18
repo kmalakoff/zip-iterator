@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.1",
-    "extract-base-iterator": "^2.6.1",
+    "extract-base-iterator": "^3.0.0",
     "on-one": "^1.0.0",
     "readable-stream": "^2.0.2"
   },
@@ -55,7 +55,7 @@
     "@types/mocha": "*",
     "@types/node": "*",
     "cr": "^0.1.0",
-    "fs-iterator": "^6.1.12",
+    "fs-iterator": "^7.0.0",
     "fs-remove-compat": "^1.0.0",
     "fs-stats-spys": "^1.0.0",
     "get-file-compat": "^2.0.0",
@@ -65,7 +65,8 @@
     "queue-cb": "^1.0.0",
     "through": "^2.3.8",
     "ts-dev-stack": "*",
-    "tsds-config": "*"
+    "tsds-config": "*",
+    "unbzip2-stream": "1.4.3"
   },
   "engines": {
     "node": ">=0.8"

@@ -75,7 +75,7 @@ describe('callback', () => {
     it('destroy entries', (done) => {
       const iterator = new ZipIterator(fixture.path);
       iterator.forEach(
-        (entry): undefined => {
+        (entry): void => {
           entry.destroy();
         },
         (err) => {

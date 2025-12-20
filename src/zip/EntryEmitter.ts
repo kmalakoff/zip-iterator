@@ -5,21 +5,8 @@
  * deferred error emission pattern for race conditions.
  */
 
-import Stream from 'stream';
-
-// Use readable-stream for Node 0.8 compatibility or native
-const major = +process.versions.node.split('.')[0];
-let PassThrough: typeof Stream.PassThrough;
-try {
-  if (major > 0) {
-    PassThrough = Stream.PassThrough;
-  } else {
-    // Node 0.8/0.10 - use readable-stream
-    PassThrough = require('readable-stream').PassThrough;
-  }
-} catch (_e) {
-  PassThrough = Stream.PassThrough;
-}
+import { PassThrough } from 'extract-base-iterator';
+import type Stream from 'stream';
 
 /**
  * Create a new entry stream
@@ -44,6 +31,8 @@ export function createEntryStream(): Stream.PassThrough {
  *
  * This handles the race condition where the stream ends before the consumer
  * has a chance to attach error listeners (e.g., small truncated files).
+ * The parser detects errors synchronously before the consumer's forEach callback
+ * has a chance to call entry.create() and attach listeners.
  *
  * @param stream The stream to emit error to
  * @param err The error to emit
@@ -114,4 +103,4 @@ export function endEntryStream(stream: Stream.PassThrough | null): void {
 /**
  * Export PassThrough for use in other modules
  */
-export { PassThrough };
+export { PassThrough } from 'extract-base-iterator';

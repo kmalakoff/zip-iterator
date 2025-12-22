@@ -39,6 +39,8 @@ export class StoreHandler implements CompressionHandler {
       }
     }
 
+    // End the stream and complete
+    this.outputStream.end();
     this.onComplete();
     return { continue: true };
   }
@@ -48,7 +50,7 @@ export class StoreHandler implements CompressionHandler {
   }
 
   isWaiting(): boolean {
-    return false; // Store handler is always synchronous
+    return false; // Store handler is synchronous
   }
 
   destroy(): void {

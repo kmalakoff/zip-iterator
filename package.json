@@ -47,9 +47,8 @@
   },
   "dependencies": {
     "call-once-fn": "^1.0.1",
-    "extract-base-iterator": "^3.0.0",
-    "on-one": "^1.0.0",
-    "readable-stream": "^2.0.2"
+    "extract-base-iterator": "^3.3.0",
+    "on-one": "^1.0.0"
   },
   "devDependencies": {
     "@types/mocha": "*",

@@ -36,6 +36,7 @@ export interface LocalFileHeader {
 
   // Computed/derived values
   isEncrypted: boolean;
+  isStrongEncrypted: boolean;
   hasDataDescriptor: boolean;
   isUtf8: boolean;
   isZip64: boolean;
@@ -87,8 +88,9 @@ export function isDataDescriptor(buf: Buffer, offset: number): boolean {
  * @returns Parsed header or null if not enough data
  */
 export function parseLocalFileHeader(buf: Buffer, offset: number): LocalFileHeader | null {
-  // Need at least the fixed header portion
-  if (buf.length < offset + C.LOCAL_HEADER_FIXED_SIZE) {
+  // Fast path: check if buffer is large enough for minimal header
+  const minHeaderSize = C.LOCAL_HEADER_FIXED_SIZE;
+  if (buf.length < offset + minHeaderSize) {
     return null;
   }
 
@@ -112,7 +114,7 @@ export function parseLocalFileHeader(buf: Buffer, offset: number): LocalFileHead
   // Calculate total header size
   const headerSize = C.LOCAL_HEADER_FIXED_SIZE + fileNameLength + extraFieldLength;
 
-  // Check if we have the complete header
+  // Check if we have the complete header (re-check with actual sizes)
   if (buf.length < offset + headerSize) {
     return null;
   }
@@ -146,6 +148,7 @@ export function parseLocalFileHeader(buf: Buffer, offset: number): LocalFileHead
 
   // Compute derived values
   const isEncrypted = (flags & C.FLAG_ENCRYPTED) !== 0;
+  const isStrongEncrypted = (flags & C.FLAG_STRONG_ENCRYPTION) !== 0;
   const hasDataDescriptor = (flags & C.FLAG_DATA_DESCRIPTOR) !== 0;
   const mtime = decodeDateTime(lastModDate, lastModTime);
 
@@ -163,6 +166,7 @@ export function parseLocalFileHeader(buf: Buffer, offset: number): LocalFileHead
     fileName,
     extraFields,
     isEncrypted,
+    isStrongEncrypted,
     hasDataDescriptor,
     isUtf8,
     isZip64,

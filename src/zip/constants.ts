@@ -48,11 +48,14 @@ export const METHOD_LZMA = 14;
 // General Purpose Bit Flags
 // =============================================================================
 
-/** Bit 0: Entry is encrypted */
+/** Bit 0: Entry is encrypted (traditional encryption) */
 export const FLAG_ENCRYPTED = 1;
 
 /** Bit 3: Data descriptor follows compressed data (sizes/CRC not in header) */
 export const FLAG_DATA_DESCRIPTOR = 8;
+
+/** Bit 6: Strong encryption / AES encryption (PKWARE) */
+export const FLAG_STRONG_ENCRYPTION = 64;
 
 /** Bit 11: Filename and comment are UTF-8 encoded */
 export const FLAG_UTF8 = 2048;
@@ -182,6 +185,9 @@ export const ZipErrorCode = {
   UNSUPPORTED_METHOD: 'ZIP_UNSUPPORTED_METHOD',
   ENCRYPTED_ENTRY: 'ZIP_ENCRYPTED_ENTRY',
   TRUNCATED_ARCHIVE: 'ZIP_TRUNCATED_ARCHIVE',
+  SIZE_EXCEEDED: 'ZIP_SIZE_EXCEEDED',
+  INVALID_SIZE: 'ZIP_INVALID_SIZE',
+  BUFFER_OVERFLOW: 'ZIP_BUFFER_OVERFLOW',
 };
 
 /** Error with a code property for programmatic handling */

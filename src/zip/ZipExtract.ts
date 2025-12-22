@@ -55,6 +55,13 @@ export interface ZipExtractOptions {
   filenameEncoding?: BufferEncoding;
   /** Verify CRC32 checksums (default: true) */
   verifyCrc?: boolean;
+  /**
+   * Maximum buffer size for data descriptor entries (entries without known size).
+   * This prevents zip bomb attacks where huge compressed data is buffered.
+   * Set to 0 or Infinity to disable (not recommended).
+   * Default: 104857600 (100MB)
+   */
+  maxDataDescriptorBuffer?: number;
 }
 
 const State = {
@@ -84,6 +91,8 @@ export default class ZipExtract extends EventEmitter {
   private compressionHandler: CompressionHandler | null;
   // Buffer for data descriptor entries (unknown size - need to scan for boundaries)
   private compressedChunks: Buffer[] | null;
+  // Track total size of compressedChunks for memory limit enforcement
+  private compressedChunksSize: number;
   // Running CRC for data descriptor entries
   private runningCrc: number;
   // Expected CRC from header
@@ -101,6 +110,7 @@ export default class ZipExtract extends EventEmitter {
     this.ended = false;
     this.compressionHandler = null;
     this.compressedChunks = null;
+    this.compressedChunksSize = 0;
     this.runningCrc = 0;
     this.expectedCrc = 0;
   }
@@ -296,14 +306,34 @@ export default class ZipExtract extends EventEmitter {
    * Parse Local File Header
    */
   private processLocalHeader(): boolean {
-    const header = parseLocalFileHeader(this.buffer.toBuffer(), 0);
+    // Check if we have minimum header size
+    if (this.buffer.length < C.LOCAL_HEADER_FIXED_SIZE) {
+      return false;
+    }
+
+    // Use zero-copy reads to get filename and extra field lengths
+    // This avoids allocating buffers for the entire header parse
+    const fileNameLength = this.buffer.readUInt16LEAt(26);
+    const extraFieldLength = this.buffer.readUInt16LEAt(28);
+
+    if (fileNameLength === null || extraFieldLength === null) {
+      return false; // Need more data
+    }
+
+    const headerSize = C.LOCAL_HEADER_FIXED_SIZE + fileNameLength + extraFieldLength;
+
+    // Read exactly what's needed using readBytesAt (zero-copy for most cases)
+    const buf = this.buffer.readBytesAt(0, headerSize);
+
+    // parseLocalFileHeader expects a contiguous buffer
+    const header = parseLocalFileHeader(buf, 0);
 
     if (!header) {
       return false; // Need more data
     }
 
-    // Check for encryption
-    if (header.isEncrypted) {
+    // Check for encryption (traditional or strong/AES)
+    if (header.isEncrypted || header.isStrongEncrypted) {
       this.emitError(C.createZipError('Encrypted ZIP entries are not supported', C.ZipErrorCode.ENCRYPTED_ENTRY));
       return false;
     }
@@ -352,8 +382,13 @@ export default class ZipExtract extends EventEmitter {
     if (header.hasDataDescriptor) {
       this.compressedChunks = [];
       this.compressionHandler = null;
+    } else if (header.compressedSize === 0) {
+      // No data to decompress - end stream immediately
+      this.compressedChunks = null;
+      this.compressionHandler = null;
+      entryStream.end();
     } else {
-      // Known size: use compression handlers for streaming
+      // Known size with data: use compression handlers for streaming
       this.compressedChunks = null;
       const handlerOptions = {
         outputStream: entryStream,
@@ -476,6 +511,7 @@ export default class ZipExtract extends EventEmitter {
     // Initialize buffer for compressed data
     if (this.compressedChunks === null) {
       this.compressedChunks = [];
+      this.compressedChunksSize = 0;
     }
 
     if (this.buffer.length === 0) {
@@ -485,6 +521,14 @@ export default class ZipExtract extends EventEmitter {
     // Consume into our accumulator
     const chunk = this.buffer.consume(this.buffer.length);
     this.compressedChunks.push(chunk);
+    this.compressedChunksSize += chunk.length;
+
+    // Check memory limit (default 100MB)
+    const maxBuffer = this.options.maxDataDescriptorBuffer ?? 104857600;
+    if (maxBuffer > 0 && this.compressedChunksSize > maxBuffer) {
+      this.emitError(C.createZipError(`Data descriptor entry exceeds buffer limit: ${this.compressedChunksSize} > ${maxBuffer}`, C.ZipErrorCode.BUFFER_OVERFLOW));
+      return false;
+    }
 
     // Combine all chunks to search for boundaries
     const combined = Buffer.concat(this.compressedChunks);
@@ -509,6 +553,7 @@ export default class ZipExtract extends EventEmitter {
 
     // Clean up compressed chunks since we've extracted what we need
     this.compressedChunks = null;
+    this.compressedChunksSize = 0;
 
     // Decompress and emit to consumer
     try {
@@ -594,7 +639,10 @@ export default class ZipExtract extends EventEmitter {
     if (!header) return false;
     const isZip64 = header.isZip64;
 
-    const descriptor = parseDataDescriptor(this.buffer.toBuffer(), 0, isZip64);
+    // Data descriptors are small (12-24 bytes), always use slice() to avoid copying large BufferLists
+    const maxDescriptorSize = isZip64 ? 32 : 24; // Safe upper bound
+    const buf = this.buffer.slice(0, Math.min(this.buffer.length, maxDescriptorSize));
+    const descriptor = parseDataDescriptor(buf, 0, isZip64);
 
     if (!descriptor) {
       return false; // Need more data
@@ -633,6 +681,7 @@ export default class ZipExtract extends EventEmitter {
 
     // Clean up data descriptor buffers
     this.compressedChunks = null;
+    this.compressedChunksSize = 0;
 
     // Reset CRC state
     this.runningCrc = 0;
@@ -670,6 +719,7 @@ export default class ZipExtract extends EventEmitter {
       this.compressionHandler = null;
     }
     this.compressedChunks = null;
+    this.compressedChunksSize = 0;
     this.currentHeader = null;
 
     this.emit('error', err);

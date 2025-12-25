@@ -6,7 +6,7 @@
  */
 
 import { allocBuffer, bufferEquals, readUInt64LE } from 'extract-base-iterator';
-import fs from 'fs';
+import fs from 'graceful-fs';
 import * as C from './constants.ts';
 import { decodeCP437 } from './cp437.ts';
 

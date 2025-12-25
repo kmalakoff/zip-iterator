@@ -1,5 +1,5 @@
 import BaseIterator, { Lock, waitForAccess } from 'extract-base-iterator';
-import fs from 'fs';
+import fs from 'graceful-fs';
 import mkdirp from 'mkdirp-classic';
 import oo from 'on-one';
 import os from 'os';

@@ -6,7 +6,7 @@
 
 import once from 'call-once-fn';
 import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
-import fs from 'fs';
+import fs from 'graceful-fs';
 import oo from 'on-one';
 
 import type { ExtractOptions, Lock } from './types.ts';

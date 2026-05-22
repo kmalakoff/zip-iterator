@@ -10,13 +10,9 @@ import { type DirectoryAttributes, DirectoryEntry, type FileAttributes, type Lin
 import FileEntry from './FileEntry.ts';
 import parseExternalFileAttributes from './lib/parseExternalFileAttributes.ts';
 import type { Entry, Lock } from './types.ts';
+import { MODE_DEFAULT_DIR, MODE_DEFAULT_FILE, S_IFDIR, S_IFLNK, S_IFREG } from './zip/constants.ts';
 import { findAsiInfo, findExtendedTimestamp } from './zip/extra-fields.ts';
 import type { CentralDirEntry, LocalFileHeader } from './zip/index.ts';
-
-// Unix file type bits (S_IFMT mask = 0xF000)
-const S_IFLNK = 0xa000; // Symbolic link
-const S_IFDIR = 0x4000; // Directory
-const S_IFREG = 0x8000; // Regular file
 
 export type EntryCallback = (error?: Error, result?: IteratorResult<Entry>) => void;
 
@@ -95,7 +91,7 @@ function getAttributes(
   let type: 'file' | 'directory' | 'symlink' | 'link' = isDirectory ? 'directory' : 'file';
 
   // Default mode
-  let mode: number = isDirectory ? 493 : 420; // 0o755 or 0o644
+  let mode: number = isDirectory ? MODE_DEFAULT_DIR : MODE_DEFAULT_FILE;
 
   // If we have Central Directory entry, use external attributes for accurate type detection
   if (cdEntry) {

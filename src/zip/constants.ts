@@ -149,6 +149,11 @@ export const PLATFORM_NTFS = 10;
 /** OS X (Darwin) */
 export const PLATFORM_OSX = 19;
 
+// Unix file type bits (S_IFMT mask = 0xF000)
+export const S_IFLNK = 0xa000; // Symbolic link
+export const S_IFDIR = 0x4000; // Directory
+export const S_IFREG = 0x8000; // Regular file
+
 // =============================================================================
 // Unix File Type Bits (from external attributes >> 28)
 // =============================================================================

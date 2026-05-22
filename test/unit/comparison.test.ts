@@ -105,6 +105,7 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
   const stats: Record<string, FileStats> = {};
 
   const iterator = new Iterator(dirPath, {
+    alwaysStat: true,
     lstat: true,
     filter: (entry): boolean => {
       // Skip .git directories
@@ -260,10 +261,7 @@ describe('Comparison - zip-iterator vs native unzip', () => {
             differences.push(`Size mismatch for ${filePath}: native=${nativeFileStats.size}, zip-iterator=${iteratorFileStats.size}`);
           }
 
-          // Compare permissions/mode, but allow for minor differences due to umask
-          const modeDiff = Math.abs(nativeFileStats.mode - iteratorFileStats.mode);
-          if (modeDiff > 0o22) {
-            // Allow up to umask differences (typically 0o022)
+          if (nativeFileStats.mode !== iteratorFileStats.mode) {
             differences.push(`Mode mismatch for ${filePath}: native=${nativeFileStats.mode.toString(8)}, zip-iterator=${iteratorFileStats.mode.toString(8)}`);
           }
         }

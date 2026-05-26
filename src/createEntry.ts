@@ -15,7 +15,7 @@ import { MODE_DEFAULT_DIR, MODE_DEFAULT_FILE, S_IFDIR, S_IFLNK, S_IFREG } from '
 import { findAsiInfo, findExtendedTimestamp } from './zip/extra-fields.ts';
 import type { CentralDirEntry, LocalFileHeader } from './zip/index.ts';
 
-export type EntryCallback = (error?: Error, result?: IteratorResult<Entry>) => void;
+export type EntryCallback = (error?: Error | null, result?: IteratorResult<Entry>) => void;
 
 /**
  * Create an entry from a LocalFileHeader and stream
@@ -39,7 +39,7 @@ export default function createEntry(header: LocalFileHeader, stream: NodeJS.Read
 
     case 'symlink':
     case 'link':
-      streamToString(stream, (err: Error | undefined, target?: string) => {
+      streamToString(stream, (err?: Error | null, target?: string) => {
         if (err) return cb(err);
         const linkAttributes: LinkAttributes = {
           ...attributes,

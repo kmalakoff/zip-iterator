@@ -27,7 +27,7 @@ export default class ZipIterator extends BaseIterator<Entry> {
     super(options);
     const lock: ZipLock = new Lock();
     this.lock = lock;
-    lock.onDestroy = (err: Error | null) => BaseIterator.prototype.end.call(this, err ?? undefined);
+    lock.onDestroy = (err: Error | null) => BaseIterator.prototype.end.call(this, err);
     this.centralDir = null;
     this.tempPath = null;
     this.streamingMode = options.streaming === true;
@@ -185,7 +185,7 @@ export default class ZipIterator extends BaseIterator<Entry> {
     });
   }
 
-  end(err?: Error) {
+  end(err?: Error | null) {
     const lock = this.lock;
     if (lock) {
       this.lock = null; // Clear FIRST to prevent re-entrancy

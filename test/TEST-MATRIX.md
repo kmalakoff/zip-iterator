@@ -76,7 +76,7 @@ Use guard clause pattern: `if (major === 0) return;`
 2. **Create fixture** if needed (keep <1KB, or use remote URL)
 3. **Implement feature** in `src/zip/*.ts`
 4. **Run tests**: `npm test`
-5. **Validate**: `npx tsds validate`
+5. **Validate**: `tsds validate`
 
 ### Test Pattern (callback style for Node 0.8+ compatibility)
 

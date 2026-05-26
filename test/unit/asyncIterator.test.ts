@@ -5,7 +5,7 @@ import path from 'path';
 import Pinkie from 'pinkie-promise';
 import url from 'url';
 
-import ZipIterator from 'zip-iterator';
+import ZipIterator, { type Entry, type ExtractOptions } from 'zip-iterator';
 
 import { getFixture } from '../lib/fixtures.ts';
 import getStats from '../lib/getStats.ts';
@@ -16,8 +16,8 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.zip');
 
-async function extract(iterator, dest, options) {
-  const links = [];
+async function extract(iterator: ZipIterator, dest: string, options: ExtractOptions & { concurrency?: number }) {
+  const links: Entry[] = [];
   for await (const entry of iterator) {
     if (entry.type === 'link') links.unshift(entry);
     else if (entry.type === 'symlink') links.push(entry);
@@ -28,7 +28,7 @@ async function extract(iterator, dest, options) {
   for (const entry of links) await entry.create(dest, options);
 }
 
-async function verify(options) {
+async function verify(options: ExtractOptions & { concurrency?: number }) {
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
   const actual = await getStats(statsPath);
   assert.deepEqual(actual, fixture.expected);

@@ -50,10 +50,7 @@ describe('streaming mode', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
             assert.strictEqual(foundPath, 'test.txt');
             assert.strictEqual(foundType, 'file');
             const content = cr(fs.readFileSync(path.join(extractDir, 'test.txt')).toString());
@@ -85,10 +82,7 @@ describe('streaming mode', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
             assert.strictEqual(foundPath, 'test.txt');
             assert.strictEqual(foundType, 'file');
             const content = cr(fs.readFileSync(path.join(extractDir, 'test.txt')).toString());
@@ -118,10 +112,7 @@ describe('streaming mode', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
             assert.strictEqual(results.length, 3);
 
             // Verify contents
@@ -164,10 +155,7 @@ describe('streaming mode', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
 
             // Find what would normally be symlinks
             const symlinks = results.filter((r) => r.path.indexOf('symlink') >= 0);
@@ -211,10 +199,7 @@ describe('streaming mode', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
 
             // Find symlinks - they should be detected correctly
             const symlinks = results.filter((r) => r.type === 'symlink');
@@ -267,10 +252,7 @@ describe('streaming mode', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
             streamingContent = cr(fs.readFileSync(path.join(streamingDir, 'test.txt')).toString());
             checkDone();
           }
@@ -291,10 +273,7 @@ describe('streaming mode', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
             defaultContent = cr(fs.readFileSync(path.join(defaultDir, 'test.txt')).toString());
             checkDone();
           }

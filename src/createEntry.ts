@@ -5,6 +5,7 @@
  * based on the parsed LocalFileHeader and Central Directory info.
  */
 
+import type { CallFn } from 'call-once-fn';
 import once from 'call-once-fn';
 import { type DirectoryAttributes, DirectoryEntry, type FileAttributes, type LinkAttributes, LinkEntry, normalizePath, SymbolicLinkEntry, streamToString } from 'extract-base-iterator';
 import FileEntry from './FileEntry.ts';
@@ -20,20 +21,13 @@ export type EntryCallback = (error?: Error, result?: IteratorResult<Entry>) => v
  * Create an entry from a LocalFileHeader and stream
  */
 export default function createEntry(header: LocalFileHeader, stream: NodeJS.ReadableStream, lock: Lock, next: () => void, callback: EntryCallback, cdEntry?: CentralDirEntry | null): void {
-  const cb = once((err?: Error, entry?: Entry) => {
-    // Call next to allow parser to continue
+  const cb: (err: Error | null, entry?: Entry) => void = once(((err: Error | null, entry?: Entry) => {
     next();
-    // Defer to ensure proper async behavior with the BaseIterator
     setTimeout(() => {
-      if (err) {
-        callback(err);
-      } else if (entry) {
-        callback(null, { done: false, value: entry });
-      } else {
-        callback(null, { done: true, value: null });
-      }
+      if (err) return callback(err);
+      entry ? callback(undefined, { done: false, value: entry }) : callback(undefined, { done: true, value: undefined as unknown as Entry });
     }, 0);
-  });
+  }) as unknown as CallFn) as (err: Error | null, entry?: Entry) => void;
 
   // Parse external attributes for type and permissions
   const attributes = getAttributes(header, cdEntry);
@@ -45,12 +39,8 @@ export default function createEntry(header: LocalFileHeader, stream: NodeJS.Read
 
     case 'symlink':
     case 'link':
-      // Read symlink target from stream
-      streamToString(stream, (err: Error | null, target?: string) => {
-        if (err) {
-          cb(err);
-          return;
-        }
+      streamToString(stream, (err: Error | undefined, target?: string) => {
+        if (err) return cb(err);
         const linkAttributes: LinkAttributes = {
           ...attributes,
           linkpath: target || '',

@@ -12,7 +12,7 @@ import * as C from '../constants.ts';
 import type { CompressionHandler, CompressionOptions, CompressionResult } from './types.ts';
 
 export class DeflateStreamHandler implements CompressionHandler {
-  private inflateStream: NodeJS.ReadWriteStream;
+  private inflateStream: NodeJS.ReadWriteStream | null;
   private outputStream: Stream.PassThrough;
   private runningCrc = 0;
   private verifyCrc: boolean;
@@ -44,7 +44,7 @@ export class DeflateStreamHandler implements CompressionHandler {
   }
 
   write(chunk: Buffer): void {
-    this.inflateStream.write(chunk);
+    if (this.inflateStream) this.inflateStream.write(chunk);
   }
 
   finish(expectedCrc: number): CompressionResult {
@@ -54,8 +54,8 @@ export class DeflateStreamHandler implements CompressionHandler {
 
     this.waiting = true;
 
-    // Set up completion handler
-    oo(this.inflateStream, ['end', 'close'], () => {
+    const inflateStream = this.inflateStream as NodeJS.ReadWriteStream;
+    oo(inflateStream, ['end', 'close'], (_err: Error | null) => {
       this.waiting = false;
 
       // Verify CRC
@@ -70,8 +70,7 @@ export class DeflateStreamHandler implements CompressionHandler {
       this.onComplete();
     });
 
-    // End the inflate stream to flush remaining data
-    this.inflateStream.end();
+    inflateStream.end();
 
     return { continue: false }; // Async completion
   }

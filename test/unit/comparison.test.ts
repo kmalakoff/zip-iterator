@@ -9,13 +9,13 @@
 import assert from 'assert';
 import { exec } from 'child_process';
 import fs from 'fs';
-import Iterator from 'fs-iterator';
+import Iterator, { type Entry as FSEntry } from 'fs-iterator';
 import { rmSync } from 'fs-remove-compat';
 import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import url from 'url';
-import ZipIterator from 'zip-iterator';
+import ZipIterator, { type Entry } from 'zip-iterator';
 
 const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
 const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
@@ -47,12 +47,9 @@ function downloadZipFile(callback: (err: Error | null) => void): void {
   console.log('Downloading Node.js zip file...');
 
   getFile(NODEJS_ZIP_URL, ZIP_FILE, (err) => {
-    if (err) {
-      callback(err);
-    } else {
-      console.log('Download complete!');
-      callback(null);
-    }
+    if (err) return callback(err);
+    console.log('Download complete!');
+    callback(null);
   });
 }
 
@@ -84,14 +81,14 @@ function extractWithZipIterator(zipPath: string, destPath: string, callback: (er
     const options = { now: new Date() };
 
     iterator.forEach(
-      (entry, callback): void => {
+      (entry: Entry, next: (err?: Error) => void): void => {
         entry.create(destPath, options, (err) => {
-          callback(err || undefined);
+          next(err ?? undefined);
         });
       },
       { callbacks: true },
       (err): void => {
-        callback(err || undefined);
+        callback(err ?? null);
       }
     );
   });
@@ -107,9 +104,8 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
   const iterator = new Iterator(dirPath, {
     alwaysStat: true,
     lstat: true,
-    filter: (entry): boolean => {
-      // Skip .git directories
-      return !(entry.stats.isDirectory() && entry.basename === '.git');
+    filter: (entry: FSEntry): boolean => {
+      return !((entry.stats as import('fs').Stats)?.isDirectory() && entry.basename === '.git');
     },
     error: (_err): boolean => {
       // Filter errors
@@ -118,24 +114,18 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
   });
 
   iterator.forEach(
-    (entry): void => {
+    (entry: FSEntry): void => {
       const relativePath = path.relative(dirPath, entry.fullPath);
-
+      const s = entry.stats as import('fs').Stats;
       stats[relativePath] = {
-        size: entry.stats.size,
-        mode: entry.stats.mode,
-        mtime: entry.stats.mtime instanceof Date ? entry.stats.mtime.getTime() : 0,
-        type: entry.stats.isDirectory() ? 'directory' : entry.stats.isFile() ? 'file' : entry.stats.isSymbolicLink() ? 'symlink' : 'other',
+        size: s.size,
+        mode: s.mode,
+        mtime: s.mtime instanceof Date ? s.mtime.getTime() : 0,
+        type: s.isDirectory() ? 'directory' : s.isFile() ? 'file' : s.isSymbolicLink() ? 'symlink' : 'other',
       };
     },
     { concurrency: 1024 },
-    (err) => {
-      if (err) {
-        callback(err);
-      } else {
-        callback(null, stats);
-      }
-    }
+    (err) => (err ? callback(err) : callback(null, stats))
   );
 }
 
@@ -175,10 +165,7 @@ describe('Comparison - zip-iterator vs native unzip', () => {
 
       // Download zip file if not already present
       downloadZipFile((err) => {
-        if (err) {
-          done(err);
-          return;
-        }
+        if (err) return done(err);
 
         // Clean up previous extractions
         removeDir(NATIVE_EXTRACT_DIR);
@@ -187,20 +174,14 @@ describe('Comparison - zip-iterator vs native unzip', () => {
         // Extract with native unzip
         console.log('Extracting with native unzip...');
         extractWithNative(ZIP_FILE, NATIVE_EXTRACT_DIR, (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
+          if (err) return done(err);
 
           // Extract with zip-iterator
           console.log('Extracting with zip-iterator...');
           extractWithZipIterator(ZIP_FILE, ITERATOR_EXTRACT_DIR, (err) => {
-            if (err) {
-              done(err);
-            } else {
-              console.log('Both extractions complete');
-              done();
-            }
+            if (err) return done(err);
+            console.log('Both extractions complete');
+            done();
           });
         });
       });
@@ -216,21 +197,14 @@ describe('Comparison - zip-iterator vs native unzip', () => {
     // Collect stats from both extractions
     console.log('Collecting stats from native extraction...');
     collectStats(NATIVE_EXTRACT_DIR, (err, nativeStats) => {
-      if (err) {
-        done(err);
-        return;
-      }
+      if (err) return done(err);
 
       console.log('Collecting stats from zip-iterator extraction...');
       collectStats(ITERATOR_EXTRACT_DIR, (err, iteratorStats) => {
-        if (err) {
-          done(err);
-          return;
-        }
+        if (err) return done(err);
 
-        // Compare the sets of files
-        const nativeFiles = Object.keys(nativeStats).sort();
-        const iteratorFiles = Object.keys(iteratorStats).sort();
+        const nativeFiles = Object.keys(nativeStats as Record<string, FileStats>).sort();
+        const iteratorFiles = Object.keys(iteratorStats as Record<string, FileStats>).sort();
 
         console.log(`Native extraction: ${nativeFiles.length} files`);
         console.log(`zip-iterator extraction: ${iteratorFiles.length} files`);
@@ -248,8 +222,8 @@ describe('Comparison - zip-iterator vs native unzip', () => {
 
         for (let i = 0; i < nativeFiles.length; i++) {
           const filePath = nativeFiles[i];
-          const nativeFileStats = nativeStats[filePath];
-          const iteratorFileStats = iteratorStats[filePath];
+          const nativeFileStats = (nativeStats as Record<string, FileStats>)[filePath];
+          const iteratorFileStats = (iteratorStats as Record<string, FileStats>)[filePath];
 
           // Compare file type
           if (nativeFileStats.type !== iteratorFileStats.type) {

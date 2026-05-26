@@ -25,7 +25,7 @@ export interface CentralDirMap {
  * Read Central Directory from file and return map of filename -> entry info
  */
 export function readCentralDirectory(filePath: string, callback: (err: Error | null, map?: CentralDirMap) => void): void {
-  fs.stat(filePath, (err, stats) => {
+  fs.stat(filePath, (err: NodeJS.ErrnoException | null, stats: import('fs').Stats) => {
     if (err) return callback(err);
 
     const fileSize = stats.size;
@@ -35,10 +35,10 @@ export function readCentralDirectory(filePath: string, callback: (err: Error | n
     const searchBuffer = allocBuffer(searchSize);
     const searchStart = fileSize - searchSize;
 
-    fs.open(filePath, 'r', (err, fd) => {
+    fs.open(filePath, 'r', (err: NodeJS.ErrnoException | null, fd: number) => {
       if (err) return callback(err);
 
-      fs.read(fd, searchBuffer, 0, searchSize, searchStart, (err, bytesRead) => {
+      fs.read(fd, searchBuffer, 0, searchSize, searchStart, (err: NodeJS.ErrnoException | null, bytesRead: number) => {
         if (err) {
           fs.close(fd, () => callback(err));
           return;
@@ -74,7 +74,7 @@ export function readCentralDirectory(filePath: string, callback: (err: Error | n
 
               // Read ZIP64 EOCD
               const zip64EocdBuf = allocBuffer(56);
-              fs.read(fd, zip64EocdBuf, 0, 56, zip64EocdOffset, (err) => {
+              fs.read(fd, zip64EocdBuf, 0, 56, zip64EocdOffset, (err: NodeJS.ErrnoException | null) => {
                 if (err) {
                   fs.close(fd, () => callback(err));
                   return;
@@ -111,7 +111,7 @@ export function readCentralDirectory(filePath: string, callback: (err: Error | n
 function readCentralDirEntries(fd: number, offset: number, size: number, callback: (err: Error | null, map?: CentralDirMap) => void): void {
   const buffer = allocBuffer(size);
 
-  fs.read(fd, buffer, 0, size, offset, (err, bytesRead) => {
+  fs.read(fd, buffer, 0, size, offset, (err: NodeJS.ErrnoException | null, bytesRead: number) => {
     if (err) return callback(err);
 
     const map: CentralDirMap = {};

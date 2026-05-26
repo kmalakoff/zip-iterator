@@ -161,10 +161,7 @@ describe('formats', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
             assert.strictEqual(foundPath, 'test.txt');
             assert.strictEqual(foundType, 'file');
             const content = cr(fs.readFileSync(path.join(extractDir, 'test.txt')).toString());
@@ -378,10 +375,7 @@ describe('formats', () => {
           },
           { callbacks: true },
           (err): void => {
-            if (err) {
-              done(err);
-              return;
-            }
+            if (err) return done(err);
             assert.strictEqual(foundPath, 'lorem.txt');
             assert.strictEqual(foundType, 'file');
             const content = fs.readFileSync(path.join(extractDir, 'lorem.txt')).toString();

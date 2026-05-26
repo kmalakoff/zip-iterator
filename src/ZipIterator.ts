@@ -21,17 +21,15 @@ export default class ZipIterator extends BaseIterator<Entry> {
   private extract: ZipExtract | null;
   private centralDir: CentralDirMap | null;
   private tempPath: string | null;
-  private sourceStream: NodeJS.ReadableStream | null;
   private streamingMode: boolean;
 
   constructor(source: string | NodeJS.ReadableStream, options: ZipIteratorOptions = {}) {
     super(options);
     const lock: ZipLock = new Lock();
     this.lock = lock;
-    lock.onDestroy = (err) => BaseIterator.prototype.end.call(this, err);
+    lock.onDestroy = (err: Error | null) => BaseIterator.prototype.end.call(this, err ?? undefined);
     this.centralDir = null;
     this.tempPath = null;
-    this.sourceStream = null;
     this.streamingMode = options.streaming === true;
 
     // Keep a setup function in processing to prevent BaseIterator from calling end()
@@ -78,7 +76,7 @@ export default class ZipIterator extends BaseIterator<Entry> {
 
     // Register cleanup for temp file
     const tempPath = this.tempPath;
-    this.lock.registerCleanup(() => {
+    (this.lock as ZipLock).registerCleanup(() => {
       fs.unlink(tempPath, () => {});
     });
 
@@ -94,7 +92,7 @@ export default class ZipIterator extends BaseIterator<Entry> {
     // Handle write completion using on-one for Node 0.8 compatibility
     // Note: Node 0.8 may only emit 'close', not 'finish'. We use waitForAccess
     // to handle Windows where 'close' can fire before file is fully written.
-    oo(writeStream, ['error', 'finish', 'close'], (err?: Error) => {
+    oo(writeStream, ['error', 'finish', 'close'], (err: Error | null) => {
       if (err) {
         this.end(err);
         return;
@@ -128,9 +126,6 @@ export default class ZipIterator extends BaseIterator<Entry> {
       return;
     }
 
-    // Store reference to destroy on end
-    this.sourceStream = stream;
-
     // Register cleanup for source stream
     this.lock.registerCleanup(() => {
       const s = stream as NodeJS.ReadableStream & { destroy?: () => void };
@@ -139,49 +134,34 @@ export default class ZipIterator extends BaseIterator<Entry> {
       }
     });
 
-    // Register cleanup for extract parser
-    const extract = this.extract;
-    this.lock.registerCleanup(() => {
-      if (extract) {
-        extract.end();
-      }
+    const extract = this.extract as ZipExtract;
+    (this.lock as ZipLock).registerCleanup(() => {
+      extract.end();
     });
 
-    // IMPORTANT: Set up parser event handlers FIRST, before data flows
-    // In Node 0.8, streams are "flowing" immediately when you attach a 'data' handler
-    // If the stream ends quickly (e.g., truncated file), we need handlers ready
-
-    this.extract.on('entry', (header: LocalFileHeader, entryStream: NodeJS.ReadableStream, next: () => void) => {
+    extract.on('entry', (header: LocalFileHeader, entryStream: NodeJS.ReadableStream, next: () => void) => {
       if (this.done) {
         next();
         return;
       }
 
-      // Look up Central Directory entry if available
       const cdEntry = this.centralDir ? this.centralDir[header.fileName] : null;
 
-      // Push a function that calls createEntry synchronously with the streams
-      // Note: createEntry must be called synchronously to receive stream data events
       this.push((_iterator, callback) => {
-        // Guard: skip if iterator already ended
         if (!this.lock) {
           next();
           callback();
           return;
         }
-        // Call createEntry - it will attach listeners to stream which is still active
         createEntry(header, entryStream, this.lock, next, callback, cdEntry);
       });
-
-      // DO NOT continue processing until consumer calls next()
-      // The stream is still being populated by ZipExtract.processFileData()
     });
 
-    this.extract.on('error', (err: Error) => {
+    extract.on('error', (err: Error) => {
       this.end(err);
     });
 
-    this.extract.on('finish', () => {
+    extract.on('finish', () => {
       if (!this.done) {
         this.end();
       }
@@ -195,7 +175,7 @@ export default class ZipIterator extends BaseIterator<Entry> {
     });
 
     // Handle stream end/error using on-one for Node 0.8 compatibility
-    oo(stream, ['error', 'end', 'close'], (err?: Error) => {
+    oo(stream, ['error', 'end', 'close'], (err: Error | null) => {
       if (err) {
         this.end(err);
       } else if (this.extract) {
@@ -214,13 +194,12 @@ export default class ZipIterator extends BaseIterator<Entry> {
         this.processing.remove(lock.setup);
         lock.setup = null;
       }
-      lock.err = err;
-      lock.release(); // Lock.__destroy() handles all cleanup
+      lock.err = err ?? null;
+      lock.release();
     }
     // Clear local refs (always runs, safe/idempotent)
     this.extract = null;
     this.centralDir = null;
-    this.sourceStream = null;
     this.tempPath = null;
   }
 }

@@ -6,7 +6,7 @@ import path from 'path';
 import Pinkie from 'pinkie-promise';
 import Queue from 'queue-cb';
 import url from 'url';
-import ZipIterator from 'zip-iterator';
+import ZipIterator, { type Entry, type ExtractOptions } from 'zip-iterator';
 import zlib from 'zlib';
 
 import bz2 from '../lib/bz2-stream.ts';
@@ -19,24 +19,32 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.zip');
 
-function extract(iterator, dest, options, callback) {
-  const links = [];
+function extract(iterator: ZipIterator, dest: string, options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
+  const links: Entry[] = [];
   iterator
     .forEach(
-      (entry) => {
-        if (entry.type === 'link') links.unshift(entry);
-        else if (entry.type === 'symlink') links.push(entry);
-        else return entry.create(dest, options);
+      (entry: Entry) => {
+        if (entry.type === 'link') {
+          links.unshift(entry);
+          return;
+        }
+        if (entry.type === 'symlink') {
+          links.push(entry);
+          return;
+        }
+        return entry.create(dest, options);
       },
       { concurrency: options.concurrency }
     )
     .then(() => {
-      // create links after directories and files
       const queue = new Queue(1);
       for (let index = 0; index < links.length; index++) {
-        ((entry) => {
-          queue.defer((callback) => {
-            entry.create(dest, options).then(callback).catch(callback);
+        ((entry: Entry) => {
+          queue.defer((cb: (err?: Error) => void) => {
+            entry
+              .create(dest, options)
+              .then(() => cb())
+              .catch((err) => cb(err as Error));
           });
         })(links[index]);
       }
@@ -45,7 +53,7 @@ function extract(iterator, dest, options, callback) {
     .catch(callback);
 }
 
-function verify(options, callback) {
+function verify(options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
   getStats(statsPath, (err, actual) => {
     if (err) return callback(err);
@@ -87,14 +95,12 @@ describe('promise', () => {
     it('destroy entries', (done) => {
       const iterator = new ZipIterator(fixture.path);
       iterator.forEach(
-        (entry): void => {
+        (entry: Entry): void => {
           entry.destroy();
         },
         (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
+          if (err) return done(err);
+
           done();
         }
       );

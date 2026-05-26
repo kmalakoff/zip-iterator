@@ -81,9 +81,9 @@ function extractWithZipIterator(zipPath: string, destPath: string, callback: (er
     const options = { now: new Date() };
 
     iterator.forEach(
-      (entry: Entry, next: (err?: Error) => void): void => {
+      (entry: Entry, next: (err?: Error | null) => void): void => {
         entry.create(destPath, options, (err) => {
-          next(err ?? undefined);
+          next(err);
         });
       },
       { callbacks: true },

@@ -43,7 +43,7 @@ describe('streaming mode', () => {
           (entry, next) => {
             foundPath = entry.path;
             foundType = entry.type;
-            entry.create(extractDir, {}, (err?: Error) => {
+            entry.create(extractDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });
@@ -75,7 +75,7 @@ describe('streaming mode', () => {
           (entry, next) => {
             foundPath = entry.path;
             foundType = entry.type;
-            entry.create(extractDir, {}, (err?: Error) => {
+            entry.create(extractDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });
@@ -105,7 +105,7 @@ describe('streaming mode', () => {
         zip.forEach(
           (entry, next) => {
             results.push({ path: entry.path, type: entry.type });
-            entry.create(extractDir, {}, (err?: Error) => {
+            entry.create(extractDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });
@@ -148,7 +148,7 @@ describe('streaming mode', () => {
         zip.forEach(
           (entry, next) => {
             results.push({ path: entry.path, type: entry.type });
-            entry.create(extractDir, {}, (err?: Error) => {
+            entry.create(extractDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });
@@ -192,7 +192,7 @@ describe('streaming mode', () => {
               next();
               return;
             }
-            entry.create(extractDir, {}, (err?: Error) => {
+            entry.create(extractDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });
@@ -245,7 +245,7 @@ describe('streaming mode', () => {
         const zipStreaming = new ZipIterator(fs.createReadStream(zipPath), { streaming: true });
         zipStreaming.forEach(
           (entry, next) => {
-            entry.create(streamingDir, {}, (err?: Error) => {
+            entry.create(streamingDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });
@@ -266,7 +266,7 @@ describe('streaming mode', () => {
         const zipDefault = new ZipIterator(fs.createReadStream(zipPath));
         zipDefault.forEach(
           (entry, next) => {
-            entry.create(defaultDir, {}, (err?: Error) => {
+            entry.create(defaultDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });

@@ -5,7 +5,7 @@ import path from 'path';
 import Pinkie from 'pinkie-promise';
 import url from 'url';
 
-import ZipIterator from 'zip-iterator';
+import ZipIterator, { type Entry, type ExtractOptions } from 'zip-iterator';
 
 import { getFixture } from '../lib/fixtures.ts';
 import getStats from '../lib/getStats.ts';
@@ -16,11 +16,11 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.zip');
 
-async function extract(iterator, dest, options) {
-  const links = [];
+async function extract(iterator: ZipIterator, dest: string, options: ExtractOptions & { concurrency?: number }) {
+  const links: Entry[] = [];
   let value = await iterator.next();
   while (!value.done) {
-    const entry = value.value;
+    const entry = value.value as Entry;
     if (entry.type === 'link') links.unshift(entry);
     else if (entry.type === 'symlink') links.push(entry);
     else await entry.create(dest, options);
@@ -31,10 +31,10 @@ async function extract(iterator, dest, options) {
   for (const entry of links) await entry.create(dest, options);
 }
 
-async function extractForEach(iterator, dest, options) {
-  const links = [];
+async function extractForEach(iterator: ZipIterator, dest: string, options: ExtractOptions & { concurrency?: number }) {
+  const links: Entry[] = [];
   await iterator.forEach(
-    async (entry) => {
+    async (entry: Entry) => {
       if (entry.type === 'link') links.unshift(entry);
       else if (entry.type === 'symlink') links.push(entry);
       else await entry.create(dest, options);
@@ -46,7 +46,7 @@ async function extractForEach(iterator, dest, options) {
   for (const entry of links) await entry.create(dest, options);
 }
 
-async function verify(options) {
+async function verify(options: ExtractOptions & { concurrency?: number }) {
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
   const actual = await getStats(statsPath);
   assert.deepEqual(actual, fixture.expected);

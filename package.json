@@ -52,8 +52,10 @@
     "on-one": "^1.0.0"
   },
   "devDependencies": {
+    "@types/graceful-fs": "^4.1.9",
     "@types/mocha": "*",
     "@types/node": "*",
+    "@types/through": "^0.0.33",
     "cr": "^0.1.0",
     "fs-iterator": "^7.0.0",
     "fs-remove-compat": "^1.0.0",

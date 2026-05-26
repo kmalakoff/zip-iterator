@@ -5,7 +5,7 @@ import mkdirp from 'mkdirp-classic';
 import path from 'path';
 import Queue from 'queue-cb';
 import url from 'url';
-import ZipIterator from 'zip-iterator';
+import ZipIterator, { type Entry, type ExtractOptions } from 'zip-iterator';
 import zlib from 'zlib';
 
 import bz2 from '../lib/bz2-stream.ts';
@@ -18,10 +18,10 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.zip');
 
-function extract(iterator, dest, options, callback) {
-  const links = [];
+function extract(iterator: ZipIterator, dest: string, options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
+  const links: Entry[] = [];
   iterator.forEach(
-    (entry, callback) => {
+    (entry: Entry, callback: (err?: Error) => void) => {
       if (entry.type === 'link') {
         links.unshift(entry);
         callback();
@@ -45,7 +45,7 @@ function extract(iterator, dest, options, callback) {
   );
 }
 
-function verify(options, callback) {
+function verify(options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
   getStats(statsPath, (err, actual) => {
     if (err) return callback(err);
@@ -75,14 +75,12 @@ describe('callback', () => {
     it('destroy entries', (done) => {
       const iterator = new ZipIterator(fixture.path);
       iterator.forEach(
-        (entry): void => {
+        (entry: Entry): void => {
           entry.destroy();
         },
         (err) => {
-          if (err) {
-            done(err);
-            return;
-          }
+          if (err) return done(err);
+
           done();
         }
       );

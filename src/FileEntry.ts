@@ -4,6 +4,7 @@
  * Wraps a decompressed stream with the entry lifecycle.
  */
 
+import type { CallFn } from 'call-once-fn';
 import once from 'call-once-fn';
 import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
 import fs from 'graceful-fs';
@@ -12,8 +13,8 @@ import oo from 'on-one';
 import type { ExtractOptions, Lock } from './types.ts';
 
 export default class ZipFileEntry extends FileEntry {
-  private lock: Lock;
-  private stream: NodeJS.ReadableStream;
+  private lock: Lock | null;
+  private stream: NodeJS.ReadableStream | null;
 
   constructor(attributes: FileAttributes, stream: NodeJS.ReadableStream, lock: Lock) {
     super(attributes);
@@ -30,16 +31,17 @@ export default class ZipFileEntry extends FileEntry {
     options = typeof options === 'function' ? {} : ((options || {}) as ExtractOptions);
 
     if (typeof callback === 'function') {
-      FileEntry.prototype.create.call(this, dest, options, (err?: Error) => {
-        callback(err);
+      const cb: NoParamCallback = (err?: Error) => {
+        (callback as NoParamCallback)(err);
         if (this.lock) {
           this.lock.release();
           this.lock = null;
         }
-      });
+      };
+      super.create(dest, options as ExtractOptions, cb);
       return;
     }
-    return new Promise((resolve, reject) => this.create(dest, options, (err?: Error, done?: boolean) => (err ? reject(err) : resolve(done))));
+    return new Promise((resolve, reject) => this.create(dest, options as ExtractOptions, (err?: Error) => (err ? reject(err) : resolve(true))));
   }
 
   _writeFile(fullPath: string, _options: ExtractOptions, callback: NoParamCallback): void {
@@ -51,38 +53,29 @@ export default class ZipFileEntry extends FileEntry {
     const stream = this.stream;
     this.stream = null; // Prevent reuse
 
-    // Use once since errors can come from either stream
-    const cb = once((err?: Error) => {
+    const cb: (err: Error | null) => void = once(((err: Error | null) => {
       err ? callback(err) : waitForAccess(fullPath, callback);
-    });
+    }) as unknown as CallFn) as (err: Error | null) => void;
 
     try {
       const writeStream = fs.createWriteStream(fullPath);
 
-      // Listen for errors on source stream (errors don't propagate through pipe)
       stream.on('error', (streamErr: Error) => {
-        // Destroy the write stream on source error.
-        // On Node 0.8, destroy() emits 'close' before 'error'. Since on-one is listening
-        // for ['error', 'close', 'finish'], it catches 'close' first, calls our callback,
-        // and removes ALL listeners - including the 'error' listener. The subsequent EBADF
-        // error then fires with no handler, causing an uncaught exception.
-        // Adding a no-op error handler ensures there's always a listener for any error.
         const ws = writeStream as fs.WriteStream & { destroy?: () => void };
         writeStream.on('error', () => {});
         if (typeof ws.destroy === 'function') ws.destroy();
         cb(streamErr);
       });
 
-      // Pipe and listen for write stream completion/errors
       stream.pipe(writeStream);
       oo(writeStream, ['error', 'close', 'finish'], cb);
     } catch (err) {
-      cb(err);
+      cb(err as Error);
     }
   }
 
   destroy() {
-    FileEntry.prototype.destroy.call(this);
+    super.destroy();
     if (this.stream) {
       this.stream.resume(); // drain stream
       this.stream = null;

@@ -18,10 +18,10 @@ const TARGET = path.join(TMP_DIR, 'target');
 
 const fixture = getFixture('fixture.zip');
 
-function extract(iterator: ZipIterator, dest: string, options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
+function extract(iterator: ZipIterator, dest: string, options: ExtractOptions & { concurrency?: number }, callback: (err?: Error | null) => void) {
   const links: Entry[] = [];
   iterator.forEach(
-    (entry: Entry, callback: (err?: Error) => void) => {
+    (entry: Entry, callback: (err?: Error | null) => void) => {
       if (entry.type === 'link') {
         links.unshift(entry);
         callback();
@@ -45,7 +45,7 @@ function extract(iterator: ZipIterator, dest: string, options: ExtractOptions & 
   );
 }
 
-function verify(options: ExtractOptions & { concurrency?: number }, callback: (err?: Error) => void) {
+function verify(options: ExtractOptions & { concurrency?: number }, callback: (err?: Error | null) => void) {
   const statsPath = options.strip ? TARGET : path.join(TARGET, 'data');
   getStats(statsPath, (err, actual) => {
     if (err) return callback(err);

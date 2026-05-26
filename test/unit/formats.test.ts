@@ -31,7 +31,7 @@ function extractAndCollect(zipPath: string, callback: (err: Error | null, result
         results.push({ path: entry.path, type: entry.type });
 
         // Use public API to create the entry
-        entry.create(extractDir, {}, (err?: Error) => {
+        entry.create(extractDir, {}, (err?: Error | null) => {
           if (err) return next(err);
           next();
         });
@@ -78,7 +78,7 @@ function expectExtractionError(zipPath: string, expectedErrorMatch: RegExp, expe
 
     zip.forEach(
       (entry, next) => {
-        entry.create(extractDir, {}, (err?: Error) => {
+        entry.create(extractDir, {}, (err?: Error | null) => {
           if (err) {
             foundError = err as CodedError;
             return next(err);
@@ -154,7 +154,7 @@ describe('formats', () => {
           (entry, next) => {
             foundPath = entry.path;
             foundType = entry.type;
-            entry.create(extractDir, {}, (err?: Error) => {
+            entry.create(extractDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });
@@ -368,7 +368,7 @@ describe('formats', () => {
           (entry, next) => {
             foundPath = entry.path;
             foundType = entry.type;
-            entry.create(extractDir, {}, (err?: Error) => {
+            entry.create(extractDir, {}, (err?: Error | null) => {
               if (err) return next(err);
               next();
             });

@@ -10,7 +10,7 @@ import assert from 'assert';
 import { exec } from 'child_process';
 import fs from 'fs';
 import Iterator, { type Entry as FSEntry } from 'fs-iterator';
-import { rmSync } from 'fs-remove-compat';
+import { safeRmSync } from 'fs-remove-compat';
 import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
@@ -58,7 +58,7 @@ function downloadZipFile(callback: (err: Error | null) => void): void {
  */
 function extractWithNative(zipPath: string, destPath: string, callback: (err: Error | null) => void): void {
   // Clean up destination directory if it exists
-  rmSync(destPath, { recursive: true, force: true });
+  safeRmSync(destPath, { recursive: true, force: true });
   mkdirp(destPath, (err) => {
     if (err) return callback(err);
 
@@ -72,7 +72,7 @@ function extractWithNative(zipPath: string, destPath: string, callback: (err: Er
  */
 function extractWithZipIterator(zipPath: string, destPath: string, callback: (err: Error | null) => void): void {
   // Clean up destination directory if it exists
-  rmSync(destPath, { recursive: true, force: true });
+  safeRmSync(destPath, { recursive: true, force: true });
   mkdirp(destPath, (err) => {
     if (err) return callback(err);
 
@@ -134,7 +134,7 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
  */
 function removeDir(dirPath: string): void {
   if (fs.existsSync(dirPath)) {
-    rmSync(dirPath, { recursive: true, force: true });
+    safeRmSync(dirPath, { recursive: true, force: true });
   }
 }
 

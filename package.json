@@ -11,7 +11,10 @@
     "decompress",
     "decompress-zip",
     ".zip",
-    "zip"
+    "zip",
+    "yauzl",
+    "zip-stream",
+    "stream"
   ],
   "homepage": "https://github.com/kmalakoff/zip-iterator",
   "repository": {
@@ -29,7 +32,7 @@
   },
   "dependencies": {
     "end-of-stream": "^1.4.4",
-    "extract-base-iterator": "^0.1.6",
+    "extract-base-iterator": "^0.1.8",
     "fs-access-compat": "^1.0.1",
     "graceful-fs": "^4.2.4",
     "inherits": "^2.0.4",

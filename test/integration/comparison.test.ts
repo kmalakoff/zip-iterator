@@ -8,9 +8,10 @@
 
 import assert from 'assert';
 import { exec } from 'child_process';
+import crypto from 'crypto';
 import fs from 'fs';
 import Iterator, { type Entry as FSEntry } from 'fs-iterator';
-import { rmSync } from 'fs-remove-compat';
+import { safeRmSync } from 'fs-remove-compat';
 import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
@@ -22,7 +23,11 @@ const TMP_DIR = path.join(__dirname, '..', '..', '.tmp');
 
 // Test configuration
 const NODEJS_ZIP_URL = 'https://nodejs.org/dist/v24.12.0/node-v24.12.0-win-x64.zip';
-const CACHE_DIR = path.join(__dirname, '..', '..', '.cache');
+const NODEJS_SHASUMS_URL = 'https://nodejs.org/dist/v24.12.0/SHASUMS256.txt';
+// Node.js v24.12.0 for Windows x64, distributed by nodejs.org under the MIT license.
+// SHA-256 is pinned to the official release manifest: SHASUMS256.txt.
+const NODEJS_ZIP_SHA256 = '9c125f61ae947b52e779095830f9cac267846a043ef7192183c84016aaad2812';
+const CACHE_DIR = path.join(TMP_DIR, 'cache');
 const ZIP_FILE = path.join(CACHE_DIR, 'node-v24.12.0-win-x64.zip');
 const NATIVE_EXTRACT_DIR = path.join(TMP_DIR, 'zip');
 const ITERATOR_EXTRACT_DIR = path.join(TMP_DIR, 'zip-iterator');
@@ -37,18 +42,75 @@ interface FileStats {
   type: 'directory' | 'file' | 'symlink' | 'other';
 }
 
-function downloadZipFile(callback: (err: Error | null) => void): void {
-  if (fs.existsSync(ZIP_FILE)) {
-    callback(null);
-    return;
+function verifyZipFile(zipPath: string, callback: (err: Error | null, valid?: boolean) => void): void {
+  const hash = crypto.createHash('sha256');
+  const input = fs.createReadStream(zipPath);
+  input.on('error', callback);
+  input.on('data', (chunk) => hash.update(chunk));
+  input.on('end', () => {
+    callback(null, hash.digest('hex') === NODEJS_ZIP_SHA256);
+  });
+}
+
+function cleanupPartialFile(partialPath: string, originalErr: Error, callback: (err: Error) => void): void {
+  try {
+    safeRmSync(partialPath, { force: true });
+  } catch (_cleanupErr) {
+    // Preserve the operation failure when cleanup itself fails.
   }
+  callback(originalErr);
+}
 
-  mkdirp.sync(CACHE_DIR);
-  console.log('Downloading Node.js zip file...');
+function downloadZipFile(callback: (err: Error | null) => void): void {
+  mkdirp(CACHE_DIR, (mkdirErr) => {
+    if (mkdirErr) return callback(mkdirErr);
 
-  getFile(NODEJS_ZIP_URL, ZIP_FILE, (err) => {
-    if (err) return callback(err);
-    console.log('Download complete!');
+    if (fs.existsSync(ZIP_FILE)) {
+      verifyZipFile(ZIP_FILE, (verifyErr, valid) => {
+        if (verifyErr) return callback(verifyErr);
+        if (valid) {
+          console.log(`Using verified Node.js archive (${NODEJS_ZIP_SHA256})`);
+          callback(null);
+          return;
+        }
+        downloadAndInstallZip(callback);
+      });
+      return;
+    }
+
+    downloadAndInstallZip(callback);
+  });
+}
+
+let partialFileCounter = 0;
+
+function downloadAndInstallZip(callback: (err: Error | null) => void): void {
+  const partialPath = `${ZIP_FILE}.partial-${process.pid}-${partialFileCounter++}`;
+  let completed = false;
+  const finish = (err: Error | null): void => {
+    if (completed) return;
+    completed = true;
+    callback(err);
+  };
+  console.log(`Downloading Node.js zip file (source: ${NODEJS_ZIP_URL}; checksums: ${NODEJS_SHASUMS_URL})...`);
+
+  getFile(NODEJS_ZIP_URL, partialPath, (downloadErr) => {
+    if (downloadErr) return cleanupPartialFile(partialPath, downloadErr, finish);
+    verifyZipFile(partialPath, (verifyErr, valid) => {
+      if (verifyErr) return cleanupPartialFile(partialPath, verifyErr, finish);
+      if (!valid) {
+        cleanupPartialFile(partialPath, new Error(`Downloaded Node.js archive SHA-256 does not match ${NODEJS_ZIP_SHA256}`), finish);
+        return;
+      }
+      fs.existsSync(ZIP_FILE) ? fs.unlink(ZIP_FILE, (unlinkErr) => (unlinkErr ? cleanupPartialFile(partialPath, unlinkErr, finish) : renameZip(partialPath, finish))) : renameZip(partialPath, finish);
+    });
+  });
+}
+
+function renameZip(partialPath: string, callback: (err: Error | null) => void): void {
+  fs.rename(partialPath, ZIP_FILE, (renameErr) => {
+    if (renameErr) return cleanupPartialFile(partialPath, renameErr, callback);
+    console.log('Download verified and installed atomically.');
     callback(null);
   });
 }
@@ -58,7 +120,7 @@ function downloadZipFile(callback: (err: Error | null) => void): void {
  */
 function extractWithNative(zipPath: string, destPath: string, callback: (err: Error | null) => void): void {
   // Clean up destination directory if it exists
-  rmSync(destPath, { recursive: true, force: true });
+  safeRmSync(destPath, { recursive: true, force: true });
   mkdirp(destPath, (err) => {
     if (err) return callback(err);
 
@@ -72,7 +134,7 @@ function extractWithNative(zipPath: string, destPath: string, callback: (err: Er
  */
 function extractWithZipIterator(zipPath: string, destPath: string, callback: (err: Error | null) => void): void {
   // Clean up destination directory if it exists
-  rmSync(destPath, { recursive: true, force: true });
+  safeRmSync(destPath, { recursive: true, force: true });
   mkdirp(destPath, (err) => {
     if (err) return callback(err);
 
@@ -134,7 +196,7 @@ function collectStats(dirPath: string, callback: (err: Error | null, stats?: Rec
  */
 function removeDir(dirPath: string): void {
   if (fs.existsSync(dirPath)) {
-    rmSync(dirPath, { recursive: true, force: true });
+    safeRmSync(dirPath, { recursive: true, force: true });
   }
 }
 

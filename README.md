@@ -1,142 +1,69 @@
-## zip-iterator
+# zip-iterator
 
-Extract contents from zip archive type using an iterator API using streams or paths. Use stream interface and pipe transforms to add decompression algorithms.
+Read entries from a ZIP archive with an iterator. Sources can be archive paths or readable streams.
 
-// asyncIterator
+## Install
 
-```js
-var assert = require('assert');
-var fs = require('fs');
-var ZipIterator = require('zip-iterator');
-
-(async function() {
-  let iterator = new ZipIterator('/path/to/archive');
-
-  try {
-    const links = [];
-    for await (const entry of iterator) {
-      if (entry.type === 'link') links.unshift(entry);
-      else if (entry.type === 'symlink') links.push(entry);
-      else await entry.create(dest, options);
-    }
-
-    // create links after directories and files
-    for (const entry of links) await entry.create(dest, options);
-  } catch (err) {
-    }
-
-  iterator.destroy();
-  iterator = null;
-})();
-
-(async function() {
-  let iterator = new ZipIterator(fs.createReadStream('/path/to/archive'));
-
-  try {
-    const links = [];
-    for await (const entry of iterator) {
-      if (entry.type === 'link') links.unshift(entry);
-      else if (entry.type === 'symlink') links.push(entry);
-      else await entry.create(dest, options);
-    }
-
-    // create links after directories and files
-    for (const entry of links) await entry.create(dest, options);
-  } catch (err) {
-    }
-
-  iterator.destroy();
-  iterator = null;
-})();
+```sh
+npm install zip-iterator
 ```
 
-// Async / Await
+## Extract an archive
 
 ```js
-var assert = require('assert');
-var ZipIterator = require('zip-iterator');
+const ZipIterator = require('zip-iterator');
 
-// one by one
-(async function() {
-  let iterator = new ZipIterator('/path/to/archive');
-
+async function extract(archivePath, destination) {
+  const iterator = new ZipIterator(archivePath);
   const links = [];
-  let entry = await iterator.next();
-  while (entry) {
-    if (entry.type === 'link') links.unshift(entry);
-    else if (entry.type === 'symlink') links.push(entry);
-    else await entry.create(dest, options);
-    entry = await iterator.next();
-  }
-
-  // create links after directories and files
-  for (entry of links) {
-    await entry.create(dest, options);
-  }
-  iterator.destroy();
-  iterator = null;
-})();
-
-// infinite concurrency
-(async function() {
-  let iterator = new ZipIterator('/path/to/archive');
 
   try {
-    const links = [];
-    await iterator.forEach(
-      async function (entry) {
-        if (entry.type === 'link') links.unshift(entry);
-        else if (entry.type === 'symlink') links.push(entry);
-        else await entry.create(dest, options);
-      },
-      { concurrency: Infinity }
-    );
-
-    // create links after directories and files
-    for (const entry of links) await entry.create(dest, options);
-  } catch (err) {
-    aseert.ok(!err);
+    for await (const entry of iterator) {
+      if (entry.type === 'link') links.unshift(entry);
+      else if (entry.type === 'symlink') links.push(entry);
+      else await entry.create(destination, { strip: 1 });
+    }
+    for (const entry of links) await entry.create(destination, { strip: 1 });
+  } finally {
+    iterator.destroy();
   }
+}
 
-  iterator.destroy();
-  iterator = null;
-})();
+extract('./archive.zip', './output').catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
 ```
 
-// Callbacks
+`entry.create(destination, options)` writes a file, directory, or link. Use `{ force: true }` to overwrite existing entries. A readable stream can be passed instead of an archive path. Node.js 0.8+ is supported; use the callback form in older Node.js versions that cannot parse `async` functions or `for await`.
+
+Stream sources are buffered to a temporary file by default so the Central Directory can identify symlinks. Set `{ streaming: true }` for forward-only parsing and lower memory use. In that mode, archives without ASi symlink fields may yield symlinks as regular files.
+
+## Callback form
 
 ```js
-var assert = require('assert');
-var Queue = require('queue-cb');
 var ZipIterator = require('zip-iterator');
-
-var iterator = new ZipIterator('/path/to/archive');
-
-// one by one
+var iterator = new ZipIterator('./archive.zip');
 var links = [];
-iterator.forEach(
-  function (entry, callback) {
-    if (entry.type === 'link') {
-      links.unshift(entry);
-      callback();
-    } else if (entry.type === 'symlink') {
-      links.push(entry);
-      callback();
-    } else entry.create(dest, options, callback);
-  },
-  { callbacks: true, concurrency: 1 },
-  function (err) {
-  
-    // create links after directories and files
-    var queue = new Queue();
-    for (var index = 0; index < links.length; index++) {
-      var entry = links[index];
-      queue.defer(entry.create.bind(entry, dest, options));
-    }
-    queue.await(callback);
 
+function createLinks(index, callback) {
+  if (index === links.length) return callback();
+  links[index].create('./output', { strip: 1 }, function(error) {
+    if (error) return callback(error);
+    createLinks(index + 1, callback);
+  });
+}
+
+iterator.forEach(function(entry, callback) {
+  if (entry.type === 'link') { links.unshift(entry); callback(); }
+  else if (entry.type === 'symlink') { links.push(entry); callback(); }
+  else entry.create('./output', { strip: 1 }, callback);
+}, { callbacks: true, concurrency: 1 }, function(error) {
+  if (error) { iterator.destroy(); throw error; }
+  createLinks(0, function(error) {
     iterator.destroy();
-    iterator = null;
-  }
-);
+    if (error) throw error;
+    console.log('Extraction complete');
+  });
+});
 ```

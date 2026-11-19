@@ -2,12 +2,12 @@ import assert from 'assert';
 import cr from 'cr';
 import fs from 'fs';
 import { safeRm } from 'fs-remove-compat';
-import getFile from 'get-file-compat';
 import mkdirp from 'mkdirp-classic';
 import path from 'path';
 
 import url from 'url';
 import ZipIterator from 'zip-iterator';
+import { downloadFixture, getFixturePath } from '../lib/download.ts';
 
 const __dirname = path.dirname(typeof __filename !== 'undefined' ? __filename : url.fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -341,18 +341,20 @@ describe('formats', () => {
     });
 
     // Remote ZIP64 test (kept for backwards compatibility and network test coverage)
-    const ZIP64_URL = 'https://raw.githubusercontent.com/gildas-lormeau/zip.js/master/tests/data/lorem-zip64.zip';
-    const ZIP64_DIR = path.join(TMP_DIR, 'zip64-download');
-    const ZIP64_PATH = path.join(ZIP64_DIR, 'lorem-zip64.zip');
+    // Source: zip.js tests/data/lorem-zip64.zip, BSD-3-Clause license, pinned to commit 383ae25afc38697f1c11cf7b34951dc54f7a546e (https://github.com/gildas-lormeau/zip.js).
+    const ZIP64_COMMIT = '383ae25afc38697f1c11cf7b34951dc54f7a546e';
+    const ZIP64_FILENAME = `lorem-zip64-${ZIP64_COMMIT}.zip`;
+    const ZIP64_PATH = getFixturePath(ZIP64_FILENAME);
 
     before((done) => {
-      fs.stat(ZIP64_PATH, (err) => {
-        if (!err) {
-          done();
-          return;
-        }
-        getFile(ZIP64_URL, ZIP64_PATH, done);
-      });
+      downloadFixture(
+        {
+          url: `https://raw.githubusercontent.com/gildas-lormeau/zip.js/${ZIP64_COMMIT}/tests/data/lorem-zip64.zip`,
+          filename: ZIP64_FILENAME,
+          sha256: 'e338a4bcfd5e2938bc81a7370da49d802fd975f1486c311242860216d65a1dd7',
+        },
+        (err) => done(err)
+      );
     });
 
     it('should extract remote ZIP64 archive with correct content', (done) => {

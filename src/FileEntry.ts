@@ -6,7 +6,7 @@
 
 import type { CallFn } from 'call-once-fn';
 import once from 'call-once-fn';
-import { type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
+import { destroyStream, type FileAttributes, FileEntry, type NoParamCallback, waitForAccess } from 'extract-base-iterator';
 import fs from 'graceful-fs';
 import oo from 'on-one';
 
@@ -61,9 +61,8 @@ export default class ZipFileEntry extends FileEntry {
       const writeStream = fs.createWriteStream(fullPath);
 
       stream.on('error', (streamErr: Error) => {
-        const ws = writeStream as fs.WriteStream & { destroy?: () => void };
         writeStream.on('error', () => {});
-        if (typeof ws.destroy === 'function') ws.destroy();
+        destroyStream(writeStream);
         cb(streamErr);
       });
 

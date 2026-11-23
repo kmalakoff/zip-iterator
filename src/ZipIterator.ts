@@ -1,15 +1,11 @@
-import BaseIterator, { Lock, waitForAccess } from 'extract-base-iterator';
+import BaseIterator, { destroyStream, Lock, tmpdir, waitForAccess } from 'extract-base-iterator';
 import fs from 'graceful-fs';
 import mkdirp from 'mkdirp-classic';
 import oo from 'on-one';
-import os from 'os';
 import path from 'path';
 import createEntry from './createEntry.ts';
 import type { Entry, ZipIteratorOptions } from './types.ts';
 import { type CentralDirMap, type LocalFileHeader, readCentralDirectory, ZipExtract } from './zip/index.ts';
-
-// Get temp directory
-const tmpdir = os.tmpdir || (os as { tmpdir?: () => string }).tmpdir || (() => '/tmp');
 
 // Extended Lock type with zip-specific properties
 interface ZipLock extends Lock {
@@ -67,7 +63,7 @@ export default class ZipIterator extends BaseIterator<Entry> {
   }
 
   private bufferStreamAndStart(source: NodeJS.ReadableStream): void {
-    // Ensure temp directory exists (may not exist on Windows with Node 0.8 fallback to /tmp)
+    // Ensure temp directory exists
     const _tmpdir = tmpdir();
     mkdirp.sync(_tmpdir);
 
@@ -84,8 +80,7 @@ export default class ZipIterator extends BaseIterator<Entry> {
 
     // Handle source errors
     source.on('error', (err: Error) => {
-      const ws = writeStream as NodeJS.WritableStream & { destroy?: () => void };
-      if (typeof ws.destroy === 'function') ws.destroy();
+      destroyStream(writeStream);
       this.end(err);
     });
 
@@ -121,17 +116,13 @@ export default class ZipIterator extends BaseIterator<Entry> {
   private startStreaming(stream: NodeJS.ReadableStream): void {
     // Guard: if iterator was destroyed before async callback, clean up and exit
     if (!this.lock) {
-      const s = stream as NodeJS.ReadableStream & { destroy?: () => void };
-      if (typeof s.destroy === 'function') s.destroy();
+      destroyStream(stream);
       return;
     }
 
     // Register cleanup for source stream
     this.lock.registerCleanup(() => {
-      const s = stream as NodeJS.ReadableStream & { destroy?: () => void };
-      if (typeof s.destroy === 'function') {
-        s.destroy();
-      }
+      destroyStream(stream);
     });
 
     const extract = this.extract as ZipExtract;
